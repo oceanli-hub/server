@@ -16,6 +16,186 @@
 #ifndef LEX_CHARSET_INCLUDED
 #define LEX_CHARSET_INCLUDED
 
+#include "simple_tokenizer.h"
+
+struct Charset_collation_map_st
+{
+public:
+  struct Elem_st
+  {
+  protected:
+    CHARSET_INFO *m_charset;
+    CHARSET_INFO *m_collation;
+    static size_t print_lex_string(char *dst, const LEX_CSTRING &str)
+    {
+      memcpy(dst, str.str, str.length);
+      return str.length;
+    }
+  public:
+    /*
+      Size in text format: 'utf8mb4=utf8mb4_unicode_ai_ci'
+    */
+    static constexpr size_t text_size_max()
+    {
+       return MY_CS_CHARACTER_SET_NAME_SIZE + 1 +
+              MY_CS_COLLATION_NAME_SIZE;
+    }
+    CHARSET_INFO *charset() const
+    {
+      return m_charset;
+    }
+    CHARSET_INFO *collation() const
+    {
+      return m_collation;
+    }
+    void set_collation(CHARSET_INFO *cl)
+    {
+      m_collation= cl;
+    }
+    size_t print(char *dst) const
+    {
+      const char *dst0= dst;
+      dst+= print_lex_string(dst, m_charset->cs_name);
+      *dst++= '=';
+      dst+= print_lex_string(dst, m_collation->coll_name);
+      return (size_t) (dst - dst0);
+    }
+    int cmp_by_charset_id(const Elem_st &rhs) const
+    {
+      return m_charset->number < rhs.m_charset->number ? -1 :
+             m_charset->number > rhs.m_charset->number ? +1 : 0;
+    }
+  };
+  class Elem: public Elem_st
+  {
+  public:
+    Elem(CHARSET_INFO *charset, CHARSET_INFO *collation)
+    {
+      m_charset= charset;
+      m_collation= collation;
+    }
+  };
+protected:
+  Elem_st m_element[8]; // Should be enough for now
+  uint m_count;
+
+  static int cmp_by_charset_id(const void *a, const void *b)
+  {
+    return static_cast<const Elem_st*>(a)->
+             cmp_by_charset_id(*static_cast<const Elem_st*>(b));
+  }
+
+  void sort()
+  {
+    qsort(m_element, m_count, sizeof(Elem_st), cmp_by_charset_id);
+  }
+
+  const Elem_st *find_elem_by_charset_id(uint id) const
+  {
+    if (!m_count)
+      return NULL;
+    int first= 0, last= ((int) m_count) - 1;
+    for ( ; first <= last; )
+    {
+      const int middle= (first + last) / 2;
+      DBUG_ASSERT(middle >= 0);
+      DBUG_ASSERT(middle < (int) m_count);
+      const uint middle_id= m_element[middle].charset()->number;
+      if (middle_id == id)
+        return &m_element[middle];
+      if (middle_id < id)
+        first= middle + 1;
+      else
+        last= middle - 1;
+    }
+    return NULL;
+  }
+
+  bool insert(const Elem_st &elem)
+  {
+    DBUG_ASSERT(elem.charset()->state & MY_CS_PRIMARY);
+    if (m_count >= array_elements(m_element))
+      return true;
+    m_element[m_count]= elem;
+    m_count++;
+    sort();
+    return false;
+  }
+
+  bool insert_or_replace(const Elem_st &elem)
+  {
+    DBUG_ASSERT(elem.charset()->state & MY_CS_PRIMARY);
+    const Elem_st *found= find_elem_by_charset_id(elem.charset()->number);
+    if (found)
+    {
+      const_cast<Elem_st*>(found)->set_collation(elem.collation());
+      return false;
+    }
+    return insert(elem);
+  }
+
+public:
+  void init()
+  {
+    m_count= 0;
+  }
+  uint count() const
+  {
+    return m_count;
+  }
+  const Elem_st & operator[](uint pos) const
+  {
+    DBUG_ASSERT(pos < m_count);
+    return m_element[pos];
+  }
+  bool insert_or_replace(const class Lex_exact_charset &cs,
+                         const class Lex_extended_collation &cl,
+                         bool error_on_conflicting_duplicate);
+  CHARSET_INFO *get_collation_for_charset(CHARSET_INFO *cs) const
+  {
+    DBUG_ASSERT(cs->state & MY_CS_PRIMARY);
+    const Elem_st *elem= find_elem_by_charset_id(cs->number);
+    return elem ? elem->collation() : cs;
+  }
+  size_t text_format_nbytes_needed() const
+  {
+    return (Elem_st::text_size_max() + 1/* for ',' */) * m_count;
+  }
+  size_t print(char *dst, size_t nbytes_available) const
+  {
+    const char *dst0= dst;
+    const char *end= dst + nbytes_available;
+    for (uint i= 0; i < m_count; i++)
+    {
+      if (Elem_st::text_size_max() + 1/* for ',' */ > (size_t) (end - dst))
+        break;
+      if (i > 0)
+        *dst++= ',';
+      dst+= m_element[i].print(dst);
+    }
+    return dst - dst0;
+  }
+  static constexpr size_t binary_size_max()
+  {
+    return 1/*count*/ + 4 * array_elements(m_element);
+  }
+  size_t to_binary(char *dst) const
+  {
+    const char *dst0= dst;
+    *dst++= (char) (uchar) m_count;
+    for (uint i= 0; i < m_count; i++)
+    {
+      int2store(dst, (uint16) m_element[i].charset()->number);
+      dst+= 2;
+      int2store(dst, (uint16) m_element[i].collation()->number);
+      dst+= 2;
+    }
+    return (size_t) (dst - dst0);
+  }
+  size_t from_binary(const char *src, size_t srclen);
+  bool from_text(const LEX_CSTRING &str, myf utf8_flag);
+};
+
 
 /*
   An extention for Charset_loader_mysys,
@@ -296,7 +476,8 @@ public:
   bool set_by_name(const char *name, myf my_flags); // e.g. MY_UTF8_IS_UTF8MB3
   bool raise_if_conflicts_with_context_collation(const Lex_context_collation &)
                                                  const;
-  bool merge_exact_charset(const Lex_exact_charset &rhs);
+  bool merge_exact_charset(const Charset_collation_map_st &map,
+                           const Lex_exact_charset &rhs);
   bool merge_exact_collation(const Lex_exact_collation &rhs);
   bool merge(const Lex_extended_collation_st &rhs);
 };
@@ -347,7 +528,9 @@ public:
   }
   bool with_collate() const { return m_with_collate; }
   CHARSET_INFO *find_bin_collation() const;
-  CHARSET_INFO *find_default_collation() const;
+  CHARSET_INFO *find_compiled_default_collation() const;
+  CHARSET_INFO *find_mapped_default_collation(
+                  const Charset_collation_map_st &map) const;
   bool raise_if_charsets_differ(const Lex_exact_charset &cs) const;
   bool raise_if_not_applicable(const Lex_exact_collation &cl) const;
   /*
@@ -355,18 +538,20 @@ public:
     So the full syntax looks like:
       CHARACTER SET cs [COLLATE cl] ... COLLATE cl2
   */
-  bool merge_collation(const Lex_extended_collation_st &cl)
+  bool merge_collation(const Charset_collation_map_st &map,
+                       const Lex_extended_collation_st &cl)
   {
     switch (cl.type()) {
     case Lex_extended_collation_st::TYPE_EXACT:
       return merge_exact_collation(Lex_exact_collation(cl.charset_info()));
     case Lex_extended_collation_st::TYPE_CONTEXTUALLY_TYPED:
-      return merge_context_collation(Lex_context_collation(cl.charset_info()));
+      return merge_context_collation(map, Lex_context_collation(cl.charset_info()));
     }
     DBUG_ASSERT(0);
     return false;
   }
-  bool merge_collation_override(const Lex_extended_collation_st &cl)
+  bool merge_collation_override(const Charset_collation_map_st &map,
+                                const Lex_extended_collation_st &cl)
   {
     switch (cl.type()) {
     case Lex_extended_collation_st::TYPE_EXACT:
@@ -374,7 +559,7 @@ public:
         Lex_exact_collation(cl.charset_info()));
     case Lex_extended_collation_st::TYPE_CONTEXTUALLY_TYPED:
       return merge_context_collation_override(
-        Lex_context_collation(cl.charset_info()));
+        map, Lex_context_collation(cl.charset_info()));
     }
     DBUG_ASSERT(0);
     return false;
@@ -383,8 +568,10 @@ public:
     Add a context collation:
       CHARACTER SET cs [COLLATE cl] ... COLLATE DEFAULT
   */
-  bool merge_context_collation(const Lex_context_collation &cl);
-  bool merge_context_collation_override(const Lex_context_collation &cl);
+  bool merge_context_collation(const Charset_collation_map_st &map,
+                               const Lex_context_collation &cl);
+  bool merge_context_collation_override(const Charset_collation_map_st &map,
+                                        const Lex_context_collation &cl);
   /*
     Add an exact collation:
       CHARACTER SET cs [COLLATE cl] ... COLLATE latin1_bin
@@ -399,7 +586,7 @@ public:
   {
     if ((m_ci->state & MY_CS_PRIMARY))
       return Lex_exact_charset(m_ci);
-    return Lex_exact_charset(find_default_collation());
+    return Lex_exact_charset(find_compiled_default_collation());
   }
 };
 
@@ -507,11 +694,12 @@ public:
     m_ci= cs.charset_info();
     m_type= TYPE_CHARACTER_SET;
   }
-  bool set_charset_collate_default(const Lex_exact_charset &cs)
+  bool set_charset_collate_default(const Charset_collation_map_st &map,
+                                   const Lex_exact_charset &cs)
   {
     CHARSET_INFO *ci;
     if (!(ci= Lex_exact_charset_opt_extended_collate(cs).
-                find_default_collation()))
+                find_mapped_default_collation(map)))
       return true;
     m_ci= ci;
     m_type= TYPE_CHARACTER_SET_COLLATE_EXACT;
@@ -544,6 +732,20 @@ public:
   {
     return m_ci;
   }
+  CHARSET_INFO *charset_info(const Charset_collation_map_st &map) const
+  {
+    switch (m_type)
+    {
+    case TYPE_CHARACTER_SET:
+      return map.get_collation_for_charset(m_ci);
+    case TYPE_EMPTY:
+    case TYPE_CHARACTER_SET_COLLATE_EXACT:
+    case TYPE_COLLATE_CONTEXTUALLY_TYPED:
+    case TYPE_COLLATE_EXACT:
+      break;
+    }
+    return m_ci;
+  }
   Type type() const
   {
     return m_type;
@@ -552,7 +754,8 @@ public:
   {
     return m_type == TYPE_COLLATE_CONTEXTUALLY_TYPED;
   }
-  CHARSET_INFO *resolved_to_character_set(CHARSET_INFO *cs) const;
+  CHARSET_INFO *resolved_to_character_set(const Charset_collation_map_st &map,
+                                          CHARSET_INFO *cs) const;
   /*
     Merge the column CHARACTER SET clause to:
     - an exact collation name
@@ -561,6 +764,7 @@ public:
     "cl" corresponds to the COLLATE clause
   */
   bool merge_column_charset_clause_and_collate_clause(
+                    const Charset_collation_map_st &map,
                     const Lex_exact_charset_extended_collation_attrs_st &cl)
   {
     switch (cl.type()) {
@@ -569,7 +773,8 @@ public:
     case TYPE_COLLATE_EXACT:
       return merge_exact_collation(Lex_exact_collation(cl.charset_info()));
     case TYPE_COLLATE_CONTEXTUALLY_TYPED:
-      return merge_context_collation(Lex_context_collation(cl.charset_info()));
+      return merge_context_collation(map,
+                                     Lex_context_collation(cl.charset_info()));
     case TYPE_CHARACTER_SET:
     case TYPE_CHARACTER_SET_COLLATE_EXACT:
       break;
@@ -584,6 +789,7 @@ public:
     in an independent COLLATE clause in a column attribute.
   */
   bool merge_column_collate_clause_and_collate_clause(
+                    const Charset_collation_map_st &map,
                     const Lex_exact_charset_extended_collation_attrs_st &cl)
   {
     DBUG_ASSERT(m_type != TYPE_CHARACTER_SET);
@@ -593,7 +799,8 @@ public:
     case TYPE_COLLATE_EXACT:
       return merge_exact_collation(Lex_exact_collation(cl.charset_info()));
     case TYPE_COLLATE_CONTEXTUALLY_TYPED:
-      return merge_context_collation(Lex_context_collation(cl.charset_info()));
+      return merge_context_collation(map,
+                                     Lex_context_collation(cl.charset_info()));
     case TYPE_CHARACTER_SET:
     case TYPE_CHARACTER_SET_COLLATE_EXACT:
       break;
@@ -601,10 +808,13 @@ public:
     DBUG_ASSERT(0);
     return false;
   }
-  bool merge_exact_charset(const Lex_exact_charset &cs);
+  bool merge_exact_charset(const Charset_collation_map_st &map,
+                           const Lex_exact_charset &cs);
   bool merge_exact_collation(const Lex_exact_collation &cl);
-  bool merge_context_collation(const Lex_context_collation &cl);
-  bool merge_collation(const Lex_extended_collation_st &cl);
+  bool merge_context_collation(const Charset_collation_map_st &map,
+                               const Lex_context_collation &cl);
+  bool merge_collation(const Charset_collation_map_st &map,
+                       const Lex_extended_collation_st &cl);
 };
 
 
@@ -713,9 +923,11 @@ public:
   }
   bool raise_if_charset_conflicts_with_default(
                         const Lex_exact_charset_opt_extended_collate &def) const;
-  CHARSET_INFO *resolved_to_context(const Charset_collation_context &ctx) const;
+  CHARSET_INFO *resolved_to_context(const Charset_collation_map_st &map,
+                                    const Charset_collation_context &ctx) const;
   bool merge_charset_default();
-  bool merge_exact_charset(const Lex_exact_charset &cs);
+  bool merge_exact_charset(const Charset_collation_map_st &map,
+                           const Lex_exact_charset &cs);
 };
 
 

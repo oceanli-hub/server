@@ -887,6 +887,8 @@ typedef struct system_variables
   vers_asof_timestamp_t vers_asof_timestamp;
   ulong vers_alter_history;
   my_bool binlog_alter_two_phase;
+
+  Charset_collation_map_st character_set_collations;
 } SV;
 
 /**

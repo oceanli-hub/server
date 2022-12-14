@@ -2200,10 +2200,11 @@ bool check_duplicates_in_interval(const char *set_or_name,
   Generates an error to the diagnostics area in case of a failure.
 */
 bool Column_definition::
-       prepare_charset_for_string(const Column_derived_attributes *dattr)
+       prepare_charset_for_string(const Charset_collation_map_st &map,
+                                  const Column_derived_attributes *dattr)
 {
   CHARSET_INFO *tmp= charset_collation_attrs().
-                       resolved_to_character_set(dattr->charset());
+                       resolved_to_character_set(map, dattr->charset());
   if (!tmp)
     return true;
   charset= tmp;
@@ -12458,7 +12459,8 @@ bool HA_CREATE_INFO::
     // Make sure we don't do double resolution in direct SQL execution
     DBUG_ASSERT(!default_table_charset || thd->stmt_arena->is_stmt_execute());
     if (!(default_table_charset=
-            default_cscl.resolved_to_context(ctx)))
+            default_cscl.resolved_to_context(
+                           thd->variables.character_set_collations, ctx)))
       return true;
   }
 
@@ -12470,7 +12472,8 @@ bool HA_CREATE_INFO::
     DBUG_ASSERT(!alter_table_convert_to_charset ||
                 thd->stmt_arena->is_stmt_execute());
     if (!(alter_table_convert_to_charset=
-            convert_cscl.resolved_to_context(ctx)))
+            convert_cscl.resolved_to_context(
+                           thd->variables.character_set_collations, ctx)))
       return true;
   }
   return false;

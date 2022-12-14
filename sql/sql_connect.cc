@@ -801,6 +801,8 @@ bool thd_init_client_charset(THD *thd, uint cs_number)
                cs->cs_name.str);
       return true;
     }
+    cs= global_system_variables.character_set_collations.
+          get_collation_for_charset(cs);
     thd->org_charset= cs;
     thd->update_charset(cs,cs,cs);
   }

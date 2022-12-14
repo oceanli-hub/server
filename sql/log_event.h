@@ -40,6 +40,7 @@
 #include <functional>
 #include <memory>
 #include <map>
+#include <lex_charset.h>
 
 #ifdef MYSQL_CLIENT
 #include "sql_const.h"
@@ -241,7 +242,10 @@ class String;
                                    1 + 4          /* type, master_data_written */ + \
                                    1 + 3          /* type, sec_part of NOW() */ + \
                                    1 + 16 + 1 + 60/* type, user_len, user, host_len, host */ + \
-                                   1 + 2 + 8      /* type, flags3, seq_no */)
+                                   1 + 2 + 8      /* type, flags3, seq_no */ + \
+                                   1 + Charset_collation_map_st::binary_size_max() \
+                                   /* type, map */ \
+                                   )
 #define MAX_LOG_EVENT_HEADER   ( /* in order of Query_log_event::write */ \
   LOG_EVENT_HEADER_LEN + /* write_header */ \
   QUERY_HEADER_LEN     + /* write_data */   \
@@ -323,6 +327,8 @@ class String;
 #define Q_XID   129
 
 #define Q_GTID_FLAGS3 130
+
+#define Q_CHARACTER_SET_COLLATIONS 131
 /* Intvar event post-header */
 
 /* Intvar event data */
@@ -2146,6 +2152,8 @@ public:
   uint32 flags2_inited;
   bool sql_mode_inited;
   bool charset_inited;
+
+  LEX_CSTRING character_set_collations;
 
   uint32 flags2;
   sql_mode_t sql_mode;
