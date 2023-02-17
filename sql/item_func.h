@@ -78,6 +78,7 @@ public:
                   JSON_EXTRACT_FUNC, JSON_VALID_FUNC, ROWNUM_FUNC,
                   CASE_SEARCHED_FUNC, // Used by ColumnStore/Spider
                   CASE_SIMPLE_FUNC,   // Used by ColumnStore/spider,
+                  DATE_FUNC, YEAR_FUNC
                 };
   static scalar_comparison_op functype_to_scalar_comparison_op(Functype type)
   {
@@ -795,6 +796,7 @@ public:
   }
 };
 
+Item *do_datetime_cmp_rewrites_for_item(THD *thd, Item_func *item_func);
 
 /**
   Functions that at fix_fields() time determine the returned field type,

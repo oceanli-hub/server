@@ -750,6 +750,87 @@ public:
 };
 
 
+class Item_func_eq;
+class Item_func_ge;
+class Item_func_gt;
+class Item_func_le;
+class Item_func_lt;
+
+/*
+  @brief Class responsible for rewriting datetime comparison condition.
+         It rewrites non-sargable conditions into sargable.
+
+  @detail
+  The intent of this class is to do equivalent rewrites as follows:
+
+    YEAR(col) <= val  ->  col <= YEAR_END(val)
+    YEAR(col) <  val  ->  col <  YEAR_START(val)
+    YEAR(col) >= val  ->  col >= YEAR_START(val)
+    YEAR(col) >  val  ->  col >  YEAR_END(val)
+    YEAR(col) =  val  ->  col >= YEAR_START(val) AND col<=YEAR_END(val)
+
+  Also the same is done for comparisons with DATE(col):
+
+    DATE(col) <= val  ->  col <= DAY_END(val)
+
+  if col has a DATE type (not DATETIME), then the rewrite becomes:
+
+    DATE(col) <= val  ->  col <= val
+
+  @usage
+    Date_cmp_func_rewriter rwr(thd, item_func);
+    Item *new_item= rwr.get_rewrite_result();
+
+    Returned new_item points to an item that item_func was rewritten to.
+    new_item already has fixed fields (fix_fields() was called).
+    If no rewrite happened, new_item points to the initial item_func parameter
+
+  @todo
+    Also handle conditions in form "YEAR(date_col) BETWEEN 2014 AND 2017"
+    and "YEAR(col) = c1 AND MONTH(col) = c2"
+*/
+class Date_cmp_func_rewriter
+{
+public:
+  Date_cmp_func_rewriter(THD* thd, Item_func_eq *item_func);
+
+  Date_cmp_func_rewriter(THD* thd, Item_func_ge *item_func);
+
+  Date_cmp_func_rewriter(THD* thd, Item_func_gt *item_func);
+
+  Date_cmp_func_rewriter(THD* thd, Item_func_le *item_func);
+
+  Date_cmp_func_rewriter(THD* thd, Item_func_lt *item_func);
+
+  Item* get_rewrite_result() const { return result; }
+
+  Date_cmp_func_rewriter() = delete;
+  Date_cmp_func_rewriter(const Date_cmp_func_rewriter&) = delete;
+  Date_cmp_func_rewriter(Date_cmp_func_rewriter&&) = delete;
+
+private:
+  bool check_cond_match_and_prepare(Item_bool_rowready_func2 *item_func);
+  Item_field *is_date_rounded_field(Item* item,
+                                    const Type_handler *comparison_type,
+                                    Item_func::Functype *out_func_type) const;
+  void rewrite_le_gt_lt_ge();
+  Item *create_start_bound();
+  Item *create_end_bound();
+  Item *create_cmp_func(Item_func::Functype func_type, Item *arg1, Item *arg2);
+
+  THD *thd= nullptr;
+  Item *const_arg_value= nullptr;
+  Item_func::Functype rewrite_func_type= Item_func::UNKNOWN_FUNC;
+  Item_func::Functype argument_func_type= Item_func::UNKNOWN_FUNC;
+  Item_field *field_ref= nullptr;
+  Item *result= nullptr;
+};
+
+
+template<typename T>
+Item* do_date_conds_transformation(THD *thd, T *item);
+
+
 class Item_func_eq :public Item_bool_rowready_func2
 {
 public:
@@ -790,6 +871,8 @@ public:
   friend class  Arg_comparator;
   Item *get_copy(THD *thd) override
   { return get_item_copy<Item_func_eq>(thd, this); }
+  Item* date_conds_transformer(THD *thd, uchar *arg) override
+  { return do_date_conds_transformation(thd, this); }
 };
 
 class Item_func_equal final :public Item_bool_rowready_func2
@@ -839,6 +922,8 @@ public:
   Item *negated_item(THD *thd) override;
   Item *get_copy(THD *thd) override
   { return get_item_copy<Item_func_ge>(thd, this); }
+  Item* date_conds_transformer(THD *thd, uchar *arg) override
+  { return do_date_conds_transformation(thd, this); }
 };
 
 
@@ -859,6 +944,8 @@ public:
   Item *negated_item(THD *thd) override;
   Item *get_copy(THD *thd) override
   { return get_item_copy<Item_func_gt>(thd, this); }
+  Item* date_conds_transformer(THD *thd, uchar *arg) override
+  { return do_date_conds_transformation(thd, this); }
 };
 
 
@@ -879,6 +966,8 @@ public:
   Item *negated_item(THD *thd) override;
   Item *get_copy(THD *thd) override
   { return get_item_copy<Item_func_le>(thd, this); }
+  Item* date_conds_transformer(THD *thd, uchar *arg) override
+  { return do_date_conds_transformation(thd, this); }
 };
 
 
@@ -899,6 +988,8 @@ public:
   Item *negated_item(THD *thd) override;
   Item *get_copy(THD *thd) override
   { return get_item_copy<Item_func_lt>(thd, this); }
+  Item* date_conds_transformer(THD *thd, uchar *arg) override
+  { return do_date_conds_transformation(thd, this); }
 };
 
 
@@ -1585,7 +1676,7 @@ public:
   {
     packed_longlong *val= reinterpret_cast<packed_longlong*>(base)+pos;
     Item_datetime *dt= static_cast<Item_datetime*>(item);
-    dt->set(val->val, type_handler()->mysql_timestamp_type());
+    dt->set_from_packed(val->val, type_handler()->mysql_timestamp_type());
   }
   friend int cmp_longlong(void *cmp_arg, packed_longlong *a,packed_longlong *b);
 };
