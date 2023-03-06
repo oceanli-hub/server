@@ -4794,14 +4794,11 @@ bool Item_func_json_schema_valid::fix_length_and_dec(THD *thd)
     return 0;
   json_scan_start(&je, js->charset(), (const uchar *) js->ptr(),
                   (const uchar *) js->ptr() + js->length());
-  if (setup_keyword_hash(&je))
-    return true;
   if (!create_object_and_handle_keyword(thd, &je, &keyword_list,
                                           &all_keywords))
     schema_validated= true;
   else
     res= true;
-  cleanup_keyword_hash();
 
   if (je.s.error)
     report_json_error(js, &je, 1);

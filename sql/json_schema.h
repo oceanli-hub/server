@@ -86,9 +86,9 @@ class Json_schema_keyword : public Sql_alloc
 };
 
 /*
-  Additional and unvaluated keywords anf items handle
+  Additional and unvaluated keywords and items handle
   keywords and validate schema in same way, so it makes sense
-  to have a base clasa for them.
+  to have a base class for them.
 */
 class Json_schema_additional_and_unevaluated : public Json_schema_keyword
 {
@@ -273,8 +273,8 @@ class Json_schema_multiple_of : public Json_schema_keyword
                         List<Json_schema_keyword> *all_keywords) override;
     Json_schema_multiple_of()
     {
-      size_t len= strlen("multiple_of");
-      strncpy(keyword_name, (const char*)"multiple_of", len);
+      size_t len= strlen("multipleOf");
+      strncpy(keyword_name, (const char*)"multipleOf", len);
       keyword_name[len]='\0';
     }
 };
@@ -625,7 +625,7 @@ class Json_schema_dependent_schemas : public Json_schema_keyword
     Json_schema_dependent_schemas()
     {
       size_t len= strlen("dependentSchemas");
-      strncpy(keyword_name, (const char*)"dependentSchema", len);
+      strncpy(keyword_name, (const char*)"dependentSchemas", len);
       keyword_name[len]='\0';
     }
     ~Json_schema_dependent_schemas()
@@ -780,7 +780,7 @@ typedef struct dependent_keyowrds
   List <String> dependents;
 } st_dependent_keywords;
 
-class Json_schema_dependent_prop : public Json_schema_keyword
+class Json_schema_dependent_required : public Json_schema_keyword
 {
   private:
     List<st_dependent_keywords> dependent_required;
@@ -792,10 +792,10 @@ class Json_schema_dependent_prop : public Json_schema_keyword
                         const char* key_start,
                         const char* key_end,
                         List<Json_schema_keyword> *all_keywords) override;
-    Json_schema_dependent_prop()
+    Json_schema_dependent_required()
     {
-      size_t len= strlen("dependentProperties");
-      strncpy(keyword_name, (const char*)"dependentProperties", len);
+      size_t len= strlen("dependentRequired");
+      strncpy(keyword_name, (const char*)"dependentRequired", len);
       keyword_name[len]='\0';
     }
 };
@@ -821,6 +821,7 @@ class Json_schema_logic : public Json_schema_keyword
       keyword_name[len]='\0';
       logic_flag= 0;
       alternate_choice1= alternate_choice2= NULL;
+      priority= 1;
     }
     virtual bool validate_count(uint* count, uint* total) { return false; }
     void set_alternate_schema_choice(Json_schema_keyword *schema1,
@@ -1009,13 +1010,29 @@ uchar* get_key_name_for_property(const char *key_name, size_t *length,
 uchar* get_key_name_for_func(const char *key_name, size_t *length,
                     my_bool /* unused */);
 
+enum keyword_flag
+{
+  JSON_SCHEMA_COMMON_KEYWORD= 0,
+  JSON_SCHEMA_NUMBER_KEYWORD= 1,
+  JSON_SCHEMA_STRING_KEYWORD= 2,
+  JSON_SCHEMA_ARRAY_KEYWORD= 3,
+  JSON_SCHEMA_OBJECT_KEYWORD= 4,
+  JSON_SCHEMA_LOGIC_KEYWORD= 5,
+  JSON_SCHEMA_CONDITION_KEYWORD= 6,
+  JSON_SCHEMA_ANNOTATION_KEYWORD= 7,
+  JSON_SCHEMA_FORMAT_KEYWORD= 8,
+  JSON_SCHEMA_MEDIA_KEYWORD= 9,
+  JSON_SCHEMA_REFERENCE_KEYWORD= 10
+};
+
 typedef struct st_json_schema_keyword_map
 {
   LEX_CSTRING func_name;
   Json_schema_keyword*(*func)(THD*);
+  enum keyword_flag flag;
 } json_schema_keyword_map;
 
-bool setup_keyword_hash(json_engine_t *je);
-void cleanup_keyword_hash();
+bool setup_json_schema_keyword_hash();
+void cleanup_json_schema_keyword_hash();
 
 #endif

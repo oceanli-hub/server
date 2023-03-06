@@ -22,269 +22,266 @@
 #include "json_schema_helper.h"
 
 static HASH all_keywords_hash;
-static HASH object_keywords_hash;
-static HASH array_keywords_hash;
-static HASH logic_keywords_hash;
 
 
-Json_schema_keyword* create_json_schema_type(THD *thd)
+static Json_schema_keyword *create_json_schema_type(THD *thd)
 
 {
   return new (thd->mem_root) Json_schema_type();
 }
 
-Json_schema_keyword *create_json_schema_enum(THD *thd)
+static Json_schema_keyword *create_json_schema_enum(THD *thd)
 {
   return new (thd->mem_root) Json_schema_enum();
 }
-Json_schema_keyword *create_json_schema_const(THD *thd)
+static Json_schema_keyword *create_json_schema_const(THD *thd)
 {
    return new (thd->mem_root) Json_schema_const();
 }
-Json_schema_keyword *create_json_schema_maximum(THD *thd)
+static Json_schema_keyword *create_json_schema_maximum(THD *thd)
 {
    return new (thd->mem_root) Json_schema_maximum();
 }
-Json_schema_keyword *create_json_schema_minimum(THD *thd)
+static Json_schema_keyword *create_json_schema_minimum(THD *thd)
 {
    return new (thd->mem_root) Json_schema_minimum();
 }
-Json_schema_keyword *create_json_schema_ex_max(THD *thd)
+static Json_schema_keyword *create_json_schema_ex_max(THD *thd)
 {
    return new (thd->mem_root) Json_schema_ex_maximum();
 }
-Json_schema_keyword *create_json_schema_ex_min(THD *thd)
+static Json_schema_keyword *create_json_schema_ex_min(THD *thd)
 {
    return new (thd->mem_root) Json_schema_ex_minimum();
 }
-Json_schema_keyword *create_json_schema_multiple_of(THD *thd)
+static Json_schema_keyword *create_json_schema_multiple_of(THD *thd)
 {
    return new (thd->mem_root) Json_schema_multiple_of();
 }
-Json_schema_keyword *create_json_schema_max_len(THD *thd)
+static Json_schema_keyword *create_json_schema_max_len(THD *thd)
 {
    return new (thd->mem_root) Json_schema_max_len();
 }
-Json_schema_keyword *create_json_schema_min_len(THD *thd)
+static Json_schema_keyword *create_json_schema_min_len(THD *thd)
 {
    return new (thd->mem_root) Json_schema_min_len();
 }
-Json_schema_keyword *create_json_schema_pattern(THD *thd)
+static Json_schema_keyword *create_json_schema_pattern(THD *thd)
 {
    return new (thd->mem_root) Json_schema_pattern();
 }
-Json_schema_keyword *create_json_schema_items(THD *thd)
+static Json_schema_keyword *create_json_schema_items(THD *thd)
 {
    return new (thd->mem_root) Json_schema_items();
 }
-Json_schema_keyword *create_json_schema_max_items(THD *thd)
+static Json_schema_keyword *create_json_schema_max_items(THD *thd)
 {
    return new (thd->mem_root) Json_schema_max_items();
 }
-Json_schema_keyword *create_json_schema_min_items(THD *thd)
+static Json_schema_keyword *create_json_schema_min_items(THD *thd)
 {
    return new (thd->mem_root) Json_schema_min_items();
 }
-Json_schema_keyword *create_json_schema_prefix_items(THD *thd)
+static Json_schema_keyword *create_json_schema_prefix_items(THD *thd)
 {
    return new (thd->mem_root) Json_schema_prefix_items();
 }
-Json_schema_keyword *create_json_schema_contains(THD *thd)
+static Json_schema_keyword *create_json_schema_contains(THD *thd)
 {
    return new (thd->mem_root) Json_schema_contains();
 }
-Json_schema_keyword *create_json_schema_max_contains(THD *thd)
+static Json_schema_keyword *create_json_schema_max_contains(THD *thd)
 {
    return new (thd->mem_root) Json_schema_max_contains();
 }
-Json_schema_keyword *create_json_schema_min_contains(THD *thd)
+static Json_schema_keyword *create_json_schema_min_contains(THD *thd)
 {
    return new (thd->mem_root) Json_schema_min_contains();
 }
-Json_schema_keyword *create_json_schema_unique_items(THD *thd)
+static Json_schema_keyword *create_json_schema_unique_items(THD *thd)
 {
    return new (thd->mem_root) Json_schema_unique_items();
 }
-Json_schema_keyword *create_json_schema_additional_items(THD *thd)
+static Json_schema_keyword *create_json_schema_additional_items(THD *thd)
 {
    return new (thd->mem_root) Json_schema_additional_items();
 }
-Json_schema_keyword *create_json_schema_unevaluated_items(THD *thd)
+static Json_schema_keyword *create_json_schema_unevaluated_items(THD *thd)
 {
    return new (thd->mem_root) Json_schema_unevaluated_items();
 }
-Json_schema_keyword *create_json_schema_properties(THD *thd)
+static Json_schema_keyword *create_json_schema_properties(THD *thd)
 {
    return new (thd->mem_root) Json_schema_properties();
 }
-Json_schema_keyword *create_json_schema_pattern_properties(THD *thd)
+static Json_schema_keyword *create_json_schema_pattern_properties(THD *thd)
 {
    return new (thd->mem_root) Json_schema_pattern_properties();
 }
-Json_schema_keyword *create_json_schema_additional_properties(THD *thd)
+static Json_schema_keyword *create_json_schema_additional_properties(THD *thd)
 {
    return new (thd->mem_root) Json_schema_additional_properties();
 }
-Json_schema_keyword *create_json_schema_unevaluated_properties(THD *thd)
+static Json_schema_keyword *create_json_schema_unevaluated_properties(THD *thd)
 {
    return new (thd->mem_root) Json_schema_unevaluated_properties();
 }
-Json_schema_keyword *create_json_schema_property_names(THD *thd)
+static Json_schema_keyword *create_json_schema_property_names(THD *thd)
 {
    return new (thd->mem_root) Json_schema_property_names();
 }
-Json_schema_keyword *create_json_schema_max_prop(THD *thd)
+static Json_schema_keyword *create_json_schema_max_prop(THD *thd)
 {
    return new (thd->mem_root) Json_schema_max_prop();
 }
-Json_schema_keyword *create_json_schema_min_prop(THD *thd)
+static Json_schema_keyword *create_json_schema_min_prop(THD *thd)
 {
    return new (thd->mem_root) Json_schema_min_prop();
 }
-Json_schema_keyword *create_json_schema_required(THD *thd)
+static Json_schema_keyword *create_json_schema_required(THD *thd)
 {
    return new (thd->mem_root) Json_schema_required();
 }
-Json_schema_keyword *create_json_schema_dependent_required(THD *thd)
+static Json_schema_keyword *create_json_schema_dependent_required(THD *thd)
 {
-   return new (thd->mem_root) Json_schema_dependent_prop();
+   return new (thd->mem_root) Json_schema_dependent_required();
 }
-Json_schema_keyword *create_json_schema_dependent_schemas(THD *thd)
+static Json_schema_keyword *create_json_schema_dependent_schemas(THD *thd)
 {
    return new (thd->mem_root) Json_schema_dependent_schemas();
 }
-Json_schema_keyword *create_json_schema_not(THD *thd)
+static Json_schema_keyword *create_json_schema_not(THD *thd)
 {
    return new (thd->mem_root) Json_schema_not();
 }
-Json_schema_keyword *create_json_schema_all_of(THD *thd)
+static Json_schema_keyword *create_json_schema_all_of(THD *thd)
 {
    return new (thd->mem_root) Json_schema_all_of();
 }
-Json_schema_keyword *create_json_schema_any_of(THD *thd)
+static Json_schema_keyword *create_json_schema_any_of(THD *thd)
 {
    return new (thd->mem_root) Json_schema_any_of();
 }
-Json_schema_keyword *create_json_schema_one_of(THD *thd)
+static Json_schema_keyword *create_json_schema_one_of(THD *thd)
 {
    return new (thd->mem_root) Json_schema_one_of();
 }
-Json_schema_keyword *create_json_schema_if(THD *thd)
+static Json_schema_keyword *create_json_schema_if(THD *thd)
 {
    return new (thd->mem_root) Json_schema_if();
 }
-Json_schema_keyword *create_json_schema_then(THD *thd)
+static Json_schema_keyword *create_json_schema_then(THD *thd)
 {
    return new (thd->mem_root) Json_schema_then();
 }
-Json_schema_keyword *create_json_schema_else(THD *thd)
+static Json_schema_keyword *create_json_schema_else(THD *thd)
 {
    return new (thd->mem_root) Json_schema_else();
 }
-Json_schema_keyword *create_json_schema_annotation(THD *thd)
+static Json_schema_keyword *create_json_schema_annotation(THD *thd)
 {
    return new (thd->mem_root) Json_schema_annotation();
 }
-Json_schema_keyword *create_json_schema_format(THD *thd)
+static Json_schema_keyword *create_json_schema_format(THD *thd)
 {
    return new (thd->mem_root) Json_schema_format();
 }
-Json_schema_keyword *create_json_schema_media_string(THD *thd)
+static Json_schema_keyword *create_json_schema_media_string(THD *thd)
 {
    return new (thd->mem_root) Json_schema_media_string();
 }
-Json_schema_keyword* create_json_schema_reference(THD *thd)
+static Json_schema_keyword *create_json_schema_reference(THD *thd)
 {
   return new (thd->mem_root) Json_schema_reference();
 }
 
- st_json_schema_keyword_map json_schema_func_array[]=
+ static st_json_schema_keyword_map json_schema_func_array[]=
 {
-  { { STRING_WITH_LEN("type") },  create_json_schema_type },
-  {{ STRING_WITH_LEN("const") },  create_json_schema_const},
-  {{ STRING_WITH_LEN("enum") },  create_json_schema_enum},
+  { { STRING_WITH_LEN("type") },  create_json_schema_type, JSON_SCHEMA_COMMON_KEYWORD},
+  {{ STRING_WITH_LEN("const") },  create_json_schema_const, JSON_SCHEMA_COMMON_KEYWORD},
+  {{ STRING_WITH_LEN("enum") },  create_json_schema_enum, JSON_SCHEMA_COMMON_KEYWORD},
 
-  {{ STRING_WITH_LEN("maximum") },  create_json_schema_maximum},
-  {{ STRING_WITH_LEN("minimum") },  create_json_schema_minimum},
-  {{ STRING_WITH_LEN("exclusiveMaximum") },  create_json_schema_ex_max},
-  {{ STRING_WITH_LEN("exclusiveMinimum") },  create_json_schema_ex_min},
-  {{ STRING_WITH_LEN("multipleOf") },  create_json_schema_multiple_of},
+  {{ STRING_WITH_LEN("maximum") },  create_json_schema_maximum, JSON_SCHEMA_NUMBER_KEYWORD},
+  {{ STRING_WITH_LEN("minimum") },  create_json_schema_minimum, JSON_SCHEMA_NUMBER_KEYWORD},
+  {{ STRING_WITH_LEN("exclusiveMaximum") },  create_json_schema_ex_max, JSON_SCHEMA_NUMBER_KEYWORD},
+  {{ STRING_WITH_LEN("exclusiveMinimum") },  create_json_schema_ex_min, JSON_SCHEMA_NUMBER_KEYWORD},
+  {{ STRING_WITH_LEN("multipleOf") },  create_json_schema_multiple_of, JSON_SCHEMA_NUMBER_KEYWORD},
 
-  {{ STRING_WITH_LEN("maxLength") },  create_json_schema_max_len},
-  {{ STRING_WITH_LEN("minLength") },  create_json_schema_min_len},
-  {{ STRING_WITH_LEN("pattern") },  create_json_schema_pattern},
+  {{ STRING_WITH_LEN("maxLength") },  create_json_schema_max_len, JSON_SCHEMA_STRING_KEYWORD},
+  {{ STRING_WITH_LEN("minLength") },  create_json_schema_min_len, JSON_SCHEMA_STRING_KEYWORD},
+  {{ STRING_WITH_LEN("pattern") },  create_json_schema_pattern, JSON_SCHEMA_STRING_KEYWORD},
 
-  {{ STRING_WITH_LEN("items") },  create_json_schema_items},
-  {{ STRING_WITH_LEN("maxItems") },  create_json_schema_max_items},
-  {{ STRING_WITH_LEN("minItems") },  create_json_schema_min_items},
-  {{ STRING_WITH_LEN("additionalItems") },  create_json_schema_additional_items},
-  {{ STRING_WITH_LEN("unevaluatedItems") },  create_json_schema_unevaluated_items},
-  {{ STRING_WITH_LEN("prefixItems") },  create_json_schema_prefix_items},
-  {{ STRING_WITH_LEN("uniqueItems") },  create_json_schema_unique_items},
-  {{ STRING_WITH_LEN("contains") },  create_json_schema_contains},
-  {{ STRING_WITH_LEN("maxContains") },  create_json_schema_max_contains},
-  {{ STRING_WITH_LEN("minContains") },  create_json_schema_min_contains},
+  {{ STRING_WITH_LEN("items") },  create_json_schema_items, JSON_SCHEMA_ARRAY_KEYWORD},
+  {{ STRING_WITH_LEN("maxItems") },  create_json_schema_max_items, JSON_SCHEMA_ARRAY_KEYWORD},
+  {{ STRING_WITH_LEN("minItems") },  create_json_schema_min_items, JSON_SCHEMA_ARRAY_KEYWORD},
+  {{ STRING_WITH_LEN("additionalItems") },  create_json_schema_additional_items, JSON_SCHEMA_ARRAY_KEYWORD},
+  {{ STRING_WITH_LEN("unevaluatedItems") },  create_json_schema_unevaluated_items, JSON_SCHEMA_ARRAY_KEYWORD},
+  {{ STRING_WITH_LEN("prefixItems") },  create_json_schema_prefix_items, JSON_SCHEMA_ARRAY_KEYWORD},
+  {{ STRING_WITH_LEN("uniqueItems") },  create_json_schema_unique_items, JSON_SCHEMA_ARRAY_KEYWORD},
+  {{ STRING_WITH_LEN("contains") },  create_json_schema_contains, JSON_SCHEMA_ARRAY_KEYWORD},
+  {{ STRING_WITH_LEN("maxContains") },  create_json_schema_max_contains, JSON_SCHEMA_ARRAY_KEYWORD},
+  {{ STRING_WITH_LEN("minContains") },  create_json_schema_min_contains, JSON_SCHEMA_ARRAY_KEYWORD},
 
-  {{ STRING_WITH_LEN("properties") },  create_json_schema_properties},
-  {{ STRING_WITH_LEN("patternProperties") },  create_json_schema_pattern_properties},
-  {{ STRING_WITH_LEN("propertyNames") },  create_json_schema_property_names},
-  {{ STRING_WITH_LEN("maxProperties") },  create_json_schema_max_prop},
-  {{ STRING_WITH_LEN("minProperties") },  create_json_schema_min_prop},
-  {{ STRING_WITH_LEN("dependentRequired") },  create_json_schema_dependent_required},
-  {{ STRING_WITH_LEN("dependentSchemas") },  create_json_schema_dependent_schemas},
-  {{ STRING_WITH_LEN("required") },  create_json_schema_required},
-  {{ STRING_WITH_LEN("additionalProperties") },  create_json_schema_additional_properties},
-  {{ STRING_WITH_LEN("unevaluatedProperties") },  create_json_schema_unevaluated_properties},
+  {{ STRING_WITH_LEN("properties") },  create_json_schema_properties, JSON_SCHEMA_OBJECT_KEYWORD},
+  {{ STRING_WITH_LEN("patternProperties") },  create_json_schema_pattern_properties, JSON_SCHEMA_OBJECT_KEYWORD},
+  {{ STRING_WITH_LEN("propertyNames") },  create_json_schema_property_names, JSON_SCHEMA_OBJECT_KEYWORD},
+  {{ STRING_WITH_LEN("maxProperties") },  create_json_schema_max_prop, JSON_SCHEMA_OBJECT_KEYWORD},
+  {{ STRING_WITH_LEN("minProperties") },  create_json_schema_min_prop, JSON_SCHEMA_OBJECT_KEYWORD},
+  {{ STRING_WITH_LEN("dependentRequired") },  create_json_schema_dependent_required, JSON_SCHEMA_OBJECT_KEYWORD},
+  {{ STRING_WITH_LEN("dependentSchemas") },  create_json_schema_dependent_schemas, JSON_SCHEMA_OBJECT_KEYWORD},
+  {{ STRING_WITH_LEN("required") },  create_json_schema_required, JSON_SCHEMA_OBJECT_KEYWORD},
+  {{ STRING_WITH_LEN("additionalProperties") },  create_json_schema_additional_properties, JSON_SCHEMA_OBJECT_KEYWORD},
+  {{ STRING_WITH_LEN("unevaluatedProperties") },  create_json_schema_unevaluated_properties, JSON_SCHEMA_OBJECT_KEYWORD},
 
-  {{ STRING_WITH_LEN("not") },  create_json_schema_not},
-  {{ STRING_WITH_LEN("allOf") },  create_json_schema_all_of},
-  {{ STRING_WITH_LEN("anyOf") },  create_json_schema_any_of},
-  {{ STRING_WITH_LEN("oneOf") },  create_json_schema_one_of},
+  {{ STRING_WITH_LEN("not") },  create_json_schema_not, JSON_SCHEMA_LOGIC_KEYWORD},
+  {{ STRING_WITH_LEN("allOf") },  create_json_schema_all_of, JSON_SCHEMA_LOGIC_KEYWORD},
+  {{ STRING_WITH_LEN("anyOf") },  create_json_schema_any_of, JSON_SCHEMA_LOGIC_KEYWORD},
+  {{ STRING_WITH_LEN("oneOf") },  create_json_schema_one_of, JSON_SCHEMA_LOGIC_KEYWORD},
 
-  {{ STRING_WITH_LEN("if") },  create_json_schema_if},
-  {{ STRING_WITH_LEN("then") },  create_json_schema_then},
-  {{ STRING_WITH_LEN("else") },  create_json_schema_else},
+  {{ STRING_WITH_LEN("if") },  create_json_schema_if, JSON_SCHEMA_CONDITION_KEYWORD},
+  {{ STRING_WITH_LEN("then") },  create_json_schema_then, JSON_SCHEMA_CONDITION_KEYWORD},
+  {{ STRING_WITH_LEN("else") },  create_json_schema_else, JSON_SCHEMA_CONDITION_KEYWORD},
 
-  {{ STRING_WITH_LEN("title") },  create_json_schema_annotation},
-  {{ STRING_WITH_LEN("description") },  create_json_schema_annotation},
-  {{ STRING_WITH_LEN("comment") },  create_json_schema_annotation},
-  {{ STRING_WITH_LEN("$schema") },  create_json_schema_annotation},
-  {{ STRING_WITH_LEN("deprecated") }, create_json_schema_annotation},
-  {{ STRING_WITH_LEN("readOnly") }, create_json_schema_annotation},
-  {{ STRING_WITH_LEN("writeOnly") }, create_json_schema_annotation},
-  {{ STRING_WITH_LEN("example") }, create_json_schema_annotation},
-  {{ STRING_WITH_LEN("default") }, create_json_schema_annotation},
-  {{ STRING_WITH_LEN("$vocabulary") }, create_json_schema_annotation},
+  {{ STRING_WITH_LEN("title") },  create_json_schema_annotation, JSON_SCHEMA_ANNOTATION_KEYWORD},
+  {{ STRING_WITH_LEN("description") },  create_json_schema_annotation, JSON_SCHEMA_ANNOTATION_KEYWORD},
+  {{ STRING_WITH_LEN("comment") },  create_json_schema_annotation, JSON_SCHEMA_ANNOTATION_KEYWORD},
+  {{ STRING_WITH_LEN("$schema") },  create_json_schema_annotation, JSON_SCHEMA_ANNOTATION_KEYWORD},
+  {{ STRING_WITH_LEN("deprecated") }, create_json_schema_annotation, JSON_SCHEMA_ANNOTATION_KEYWORD},
+  {{ STRING_WITH_LEN("readOnly") }, create_json_schema_annotation, JSON_SCHEMA_ANNOTATION_KEYWORD},
+  {{ STRING_WITH_LEN("writeOnly") }, create_json_schema_annotation, JSON_SCHEMA_ANNOTATION_KEYWORD},
+  {{ STRING_WITH_LEN("example") }, create_json_schema_annotation, JSON_SCHEMA_ANNOTATION_KEYWORD},
+  {{ STRING_WITH_LEN("default") }, create_json_schema_annotation, JSON_SCHEMA_ANNOTATION_KEYWORD},
+  {{ STRING_WITH_LEN("$vocabulary") }, create_json_schema_annotation, JSON_SCHEMA_ANNOTATION_KEYWORD},
 
-  {{ STRING_WITH_LEN("date-time") }, create_json_schema_format},
-  {{ STRING_WITH_LEN("date") }, create_json_schema_format},
-  {{ STRING_WITH_LEN("time") }, create_json_schema_format},
-  {{ STRING_WITH_LEN("duration") }, create_json_schema_format},
-  {{ STRING_WITH_LEN("email") }, create_json_schema_format},
-  {{ STRING_WITH_LEN("idn-email") }, create_json_schema_format},
-  {{ STRING_WITH_LEN("hostname") }, create_json_schema_format},
-  {{ STRING_WITH_LEN("idn-hostname") }, create_json_schema_format},
-  {{ STRING_WITH_LEN("ipv4") }, create_json_schema_format},
-  {{ STRING_WITH_LEN("ipv6") }, create_json_schema_format},
-  {{ STRING_WITH_LEN("uri") }, create_json_schema_format},
-  {{ STRING_WITH_LEN("uri-reference") }, create_json_schema_format},
-  {{ STRING_WITH_LEN("iri") }, create_json_schema_format},
-  {{ STRING_WITH_LEN("iri-reference") }, create_json_schema_format},
-  {{ STRING_WITH_LEN("uuid") }, create_json_schema_format},
-  {{ STRING_WITH_LEN("json-pointer") }, create_json_schema_format},
-  {{ STRING_WITH_LEN("relative-json-pointer") }, create_json_schema_format},
-  {{ STRING_WITH_LEN("regex") }, create_json_schema_format},
+  {{ STRING_WITH_LEN("date-time") }, create_json_schema_format, JSON_SCHEMA_FORMAT_KEYWORD},
+  {{ STRING_WITH_LEN("date") }, create_json_schema_format, JSON_SCHEMA_FORMAT_KEYWORD},
+  {{ STRING_WITH_LEN("time") }, create_json_schema_format, JSON_SCHEMA_FORMAT_KEYWORD},
+  {{ STRING_WITH_LEN("duration") }, create_json_schema_format, JSON_SCHEMA_FORMAT_KEYWORD},
+  {{ STRING_WITH_LEN("email") }, create_json_schema_format, JSON_SCHEMA_FORMAT_KEYWORD},
+  {{ STRING_WITH_LEN("idn-email") }, create_json_schema_format, JSON_SCHEMA_FORMAT_KEYWORD},
+  {{ STRING_WITH_LEN("hostname") }, create_json_schema_format, JSON_SCHEMA_FORMAT_KEYWORD},
+  {{ STRING_WITH_LEN("idn-hostname") }, create_json_schema_format, JSON_SCHEMA_FORMAT_KEYWORD},
+  {{ STRING_WITH_LEN("ipv4") }, create_json_schema_format, JSON_SCHEMA_FORMAT_KEYWORD},
+  {{ STRING_WITH_LEN("ipv6") }, create_json_schema_format, JSON_SCHEMA_FORMAT_KEYWORD},
+  {{ STRING_WITH_LEN("uri") }, create_json_schema_format, JSON_SCHEMA_FORMAT_KEYWORD},
+  {{ STRING_WITH_LEN("uri-reference") }, create_json_schema_format, JSON_SCHEMA_FORMAT_KEYWORD},
+  {{ STRING_WITH_LEN("iri") }, create_json_schema_format, JSON_SCHEMA_FORMAT_KEYWORD},
+  {{ STRING_WITH_LEN("iri-reference") }, create_json_schema_format, JSON_SCHEMA_FORMAT_KEYWORD},
+  {{ STRING_WITH_LEN("uuid") }, create_json_schema_format, JSON_SCHEMA_FORMAT_KEYWORD},
+  {{ STRING_WITH_LEN("json-pointer") }, create_json_schema_format, JSON_SCHEMA_FORMAT_KEYWORD},
+  {{ STRING_WITH_LEN("relative-json-pointer") }, create_json_schema_format, JSON_SCHEMA_FORMAT_KEYWORD},
+  {{ STRING_WITH_LEN("regex") }, create_json_schema_format, JSON_SCHEMA_FORMAT_KEYWORD},
 
-  {{ STRING_WITH_LEN("contentMediaType") }, create_json_schema_media_string},
-  {{ STRING_WITH_LEN("conentEncoding") }, create_json_schema_media_string},
-  {{ STRING_WITH_LEN("contentSchema") }, create_json_schema_media_string},
+  {{ STRING_WITH_LEN("contentMediaType") }, create_json_schema_media_string, JSON_SCHEMA_MEDIA_KEYWORD},
+  {{ STRING_WITH_LEN("conentEncoding") }, create_json_schema_media_string, JSON_SCHEMA_MEDIA_KEYWORD},
+  {{ STRING_WITH_LEN("contentSchema") }, create_json_schema_media_string, JSON_SCHEMA_MEDIA_KEYWORD},
 
-  {{ STRING_WITH_LEN("$ref") }, create_json_schema_media_string},
-  {{ STRING_WITH_LEN("$id") }, create_json_schema_media_string},
-  {{ STRING_WITH_LEN("$anchor") }, create_json_schema_media_string},
-  {{ STRING_WITH_LEN("$defs") }, create_json_schema_media_string},
-  {{ STRING_WITH_LEN("$dynamicRef") }, create_json_schema_media_string},
-  {{ STRING_WITH_LEN("$dynamicAnchor") }, create_json_schema_media_string}
+  {{ STRING_WITH_LEN("$ref") }, create_json_schema_reference, JSON_SCHEMA_REFERENCE_KEYWORD},
+  {{ STRING_WITH_LEN("$id") }, create_json_schema_reference, JSON_SCHEMA_REFERENCE_KEYWORD},
+  {{ STRING_WITH_LEN("$anchor") }, create_json_schema_reference, JSON_SCHEMA_REFERENCE_KEYWORD},
+  {{ STRING_WITH_LEN("$defs") }, create_json_schema_reference, JSON_SCHEMA_REFERENCE_KEYWORD},
+  {{ STRING_WITH_LEN("$dynamicRef") }, create_json_schema_reference, JSON_SCHEMA_REFERENCE_KEYWORD},
+  {{ STRING_WITH_LEN("$dynamicAnchor") }, create_json_schema_reference, JSON_SCHEMA_REFERENCE_KEYWORD},
 };
 
 
@@ -869,12 +866,29 @@ bool Json_schema_pattern::validate(const json_engine_t *je,
 {
   bool pattern_matches= false;
 
-  if (je->value_type != JSON_VALUE_STRING)
-    return false;
-
-  str->str_value.set_or_copy_aligned((const char*)je->value,
-                                     (size_t)je->value_len, je->s.cs);
-
+  /*
+    We want to match a single pattern against multiple
+    string when (see below):
+    1) with "pattern" when there are different json strings
+       to be validated against one pattern.
+    2) with "propertyNames", where there is one pattern but
+       multiple property names to be validated against one
+       pattern
+  */
+  if (!k_start && !k_end)
+  {
+    /* 1) */
+    if (je->value_type != JSON_VALUE_STRING)
+      return false;
+     str->str_value.set_or_copy_aligned((const char*)je->value,
+                                        (size_t)je->value_len, je->s.cs);
+  }
+  else
+  {
+    /* 2) */
+    str->str_value.set_or_copy_aligned((const char*)k_start,
+                                        (size_t)(k_end-k_start), je->s.cs);
+  }
   if (re.recompile(pattern))
     return true;
   if (re.exec(str, 0, 0))
@@ -1107,11 +1121,7 @@ bool Json_schema_contains::handle_keyword(THD *thd, json_engine_t *je,
   return create_object_and_handle_keyword(thd, je, &contains, all_keywords);
 }
 
-/*
-"items" can be either of type array or a valid json schema.
-If it of type array, then we want to validate it like
-prefixItems else validate value(s) like a schema.
-*/
+
 bool Json_schema_items::handle_keyword(THD *thd, json_engine_t *je,
                                                const char* key_start,
                                                const char* key_end,
@@ -1137,8 +1147,8 @@ bool Json_schema_items::handle_keyword(THD *thd, json_engine_t *je,
 }
 
 bool Json_schema_items::validate_as_alternate(const json_engine_t *je,
-                                 const uchar *k_start,
-                                 const uchar* k_end)
+                                              const uchar *k_start,
+                                              const uchar* k_end)
 {
   /*
     The indexes in prefix array were less than that in the json array.
@@ -1159,6 +1169,9 @@ bool Json_schema_items::validate(const json_engine_t *je,
   int level= je->stack_p, count=0;
   bool is_false= false;
   json_engine_t curr_je= *je;
+
+  if (je->value_type != JSON_VALUE_ARRAY)
+    return false;
 
   if (!allowed)
     is_false= true;
@@ -1565,7 +1578,7 @@ bool Json_schema_required::handle_keyword(THD *thd, json_engine_t *je,
   return false;
 }
 
-bool Json_schema_dependent_prop::validate(const json_engine_t *je,
+bool Json_schema_dependent_required::validate(const json_engine_t *je,
                                           const uchar *k_start,
                                           const uchar* k_end)
 {
@@ -1646,7 +1659,7 @@ bool Json_schema_dependent_prop::validate(const json_engine_t *je,
   return res;
 }
 
-bool Json_schema_dependent_prop::handle_keyword(THD *thd, json_engine_t *je,
+bool Json_schema_dependent_required::handle_keyword(THD *thd, json_engine_t *je,
                                                 const char* key_start,
                                                 const char* key_end,
                                                 List<Json_schema_keyword>
@@ -1745,14 +1758,19 @@ bool Json_schema_property_names::validate(const json_engine_t *je,
       case JST_KEY:
       {
         const uchar *k_end, *k_start;
-        k_start= je->s.c_str;
+        k_start= curr_je.s.c_str;
         do
         {
-          k_end= je->s.c_str;
+          k_end= curr_je.s.c_str;
         } while (json_read_keyname_chr(&curr_je) == 0);
 
         if (json_read_value(&curr_je))
           return true;
+        if (!json_value_scalar(&curr_je))
+        {
+          if (json_skip_level(&curr_je))
+            return true;
+        }
 
         List_iterator <Json_schema_keyword> it1 (property_names);
         Json_schema_keyword *curr_schema= NULL;
@@ -2631,44 +2649,39 @@ add_schema_interdependence(List<Json_schema_keyword> *temporary,
   while((temp_keyword= temp_it++))
   {
     size_t len= strlen(temp_keyword->keyword_name);
-    if (my_hash_search(&array_keywords_hash,
-                       (uchar*)(temp_keyword->keyword_name), len))
+    st_json_schema_keyword_map *curr_element= NULL;
+    if ((curr_element= (st_json_schema_keyword_map*) my_hash_search(&all_keywords_hash,
+                       (uchar*)(temp_keyword->keyword_name), len)))
     {
-      array_prop.push_back(temp_keyword);
-    }
-    else if (my_hash_search(&object_keywords_hash,
-                            (uchar*)(temp_keyword->keyword_name), len))
-    {
-        object_prop.push_back(temp_keyword);
-    }
-    else if (my_hash_search(&logic_keywords_hash,
-                            (uchar*)(temp_keyword->keyword_name), len))
-    {
-      logic_prop.push_back(temp_keyword);
-      keyword_list->push_back(temp_keyword);
-    }
-    else
-    {
-      if (json_key_equals(temp_keyword->keyword_name,
+      if (temp_keyword->priority > 0)
+      {
+        if (curr_element->flag == JSON_SCHEMA_ARRAY_KEYWORD)
+          array_prop.push_back(temp_keyword);
+        else if (curr_element->flag == JSON_SCHEMA_OBJECT_KEYWORD)
+          object_prop.push_back(temp_keyword);
+        else if (curr_element->flag == JSON_SCHEMA_LOGIC_KEYWORD)
+          logic_prop.push_back(temp_keyword);
+      }
+      else if (json_key_equals(temp_keyword->keyword_name,
                           { STRING_WITH_LEN("if") }, (int)len))
-        if_cond= temp_keyword;
+          if_cond= temp_keyword;
       else if (json_key_equals(temp_keyword->keyword_name,
                                { STRING_WITH_LEN("then") }, (int)len))
-        then_cond= temp_keyword;
+          then_cond= temp_keyword;
       else if (json_key_equals(temp_keyword->keyword_name,
                                { STRING_WITH_LEN("else") }, (int)len))
-        else_cond= temp_keyword;
+          else_cond= temp_keyword;
       else if (json_key_equals(temp_keyword->keyword_name,
                                { STRING_WITH_LEN("contains") }, (int)len))
-        contains= temp_keyword;
+          contains= temp_keyword;
       else if (json_key_equals(temp_keyword->keyword_name,
-                               { STRING_WITH_LEN("minContains") }, (int)len))
-        min_contains= temp_keyword;
+                              { STRING_WITH_LEN("minContains") }, (int)len))
+          min_contains= temp_keyword;
       else if (json_key_equals(temp_keyword->keyword_name,
                                { STRING_WITH_LEN("maxContains") }, (int)len))
-        max_contains= temp_keyword;
+          max_contains= temp_keyword;
       else
-        keyword_list->push_back(temp_keyword);
+          keyword_list->push_back(temp_keyword);
     }
   }
 
@@ -2705,6 +2718,7 @@ add_schema_interdependence(List<Json_schema_keyword> *temporary,
     {
       curr_schema->set_alternate_schema_choice(array_prop.elem(0),
                                                object_prop.elem(0));
+      keyword_list->push_back(curr_schema);
     }
     array_prop.empty();
     object_prop.empty();
@@ -2801,68 +2815,27 @@ uchar* get_key_name_for_func(const char *key_name, size_t *length,
   return (uchar*)curr_keyword->func_name.str;
 }
 
-bool setup_keyword_hash(json_engine_t *je)
+bool setup_json_schema_keyword_hash()
 {
-  int len= sizeof(json_schema_func_array) / sizeof(json_schema_func_array[0]);
   if (my_hash_init(PSI_INSTRUMENT_ME,
                    &all_keywords_hash,
-                   je->s.cs, 1024, 0, 0,
+                   system_charset_info, 1024, 0, 0,
                    (my_hash_get_key) get_key_name_for_func,
-                   NULL, 0) ||
-      my_hash_init(PSI_INSTRUMENT_ME,
-                   &object_keywords_hash,
-                   je->s.cs, 1024, 0, 0, (my_hash_get_key) get_key_name,
-                   NULL, 0) ||
-      my_hash_init(PSI_INSTRUMENT_ME,
-                   &array_keywords_hash,
-                   je->s.cs, 1024, 0, 0, (my_hash_get_key) get_key_name,
-                   NULL, 0) ||
-      my_hash_init(PSI_INSTRUMENT_ME,
-                   &logic_keywords_hash,
-                   je->s.cs, 1024, 0, 0, (my_hash_get_key) get_key_name,
                    NULL, 0))
     return true;
-  if (my_hash_insert(&array_keywords_hash,
-                     (const uchar*)"items") ||
-      my_hash_insert(&array_keywords_hash,
-                     (const uchar*)"prefixItems") ||
-      my_hash_insert(&array_keywords_hash,
-                     (const uchar*)"additionalItems") ||
-      my_hash_insert(&array_keywords_hash,
-                     (const uchar*)"unevaluatedItems") ||
-      my_hash_insert(&object_keywords_hash,
-                     (const uchar*)"properties") ||
-      my_hash_insert(&object_keywords_hash,
-                    (const uchar*)"patternProperties") ||
-      my_hash_insert(&object_keywords_hash,
-                     (const uchar*)"additionalProperties") ||
-      my_hash_insert(&object_keywords_hash,
-                     (const uchar*)"unevaluatedProperties") ||
-      my_hash_insert(&logic_keywords_hash,
-                     (const uchar*)"not") ||
-      my_hash_insert(&logic_keywords_hash,
-                     (const uchar*)"anyOf") ||
-      my_hash_insert(&logic_keywords_hash,
-                     (const uchar*)"allOf") ||
-      my_hash_insert(&logic_keywords_hash,
-                     (const uchar*)"oneOf"))
-    return true;
 
-  for (int i= 0; i<len; i++)
+  int size= sizeof(json_schema_func_array)/sizeof(json_schema_func_array[0]);
+  for (int i= 0; i < size; i++)
   {
-    if (my_hash_insert(&all_keywords_hash,
-                        (uchar*)(&json_schema_func_array[i])))
+    if (my_hash_insert(&all_keywords_hash, (uchar*)(&json_schema_func_array[i])))
       return true;
   }
   return false;
 }
 
-void cleanup_keyword_hash()
+void cleanup_json_schema_keyword_hash()
 {
   my_hash_free(&all_keywords_hash);
-  my_hash_free(&object_keywords_hash);
-  my_hash_free(&array_keywords_hash);
-  my_hash_free(&logic_keywords_hash);
 
   return;
 }

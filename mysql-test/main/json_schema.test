@@ -291,6 +291,14 @@ SELECT JSON_SCHEMA_VALID(@schema_array, '[1,2,3]');
 
 --echo # Object validation
 
+SET @property_names= '{
+                       "PropertyNames":{
+                                          "pattern": "^I_"
+                                       }
+                    }';
+SELECT JSON_SCHEMA_VALID(@property_names, '{"I_int1":3, "O_ob1":{"key1":"val1"}}');
+SELECT JSON_SCHEMA_VALID(@property_names, '{"I_int1":3, "I_ob1":{"key1":"val1"}}');
+
 --echo # checking that when a match is found in properties or patternProperties, it must validate and
 --echo # validation result affects the schema. If key is not found in properties or patternProperties, and
 --echo # additionalProperties exists, it must validate regardless of existence or value for unevaluatedProperties
