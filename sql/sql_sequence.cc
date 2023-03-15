@@ -309,28 +309,28 @@ bool check_sequence_fields(LEX *lex, List<Create_field> *fields)
   field_count= fields->elements;
   if (!field_count)
   {
-    reason= "Wrong number of columns";
+    reason= my_get_err_msg(ER_SEQUENCE_TABLE_HAS_WRONG_NUMBER_OF_COLUMNS);
     goto err;
   }
   row_structure= sequence_structure(fields->head()->type_handler());
   if (field_count != array_elements(row_structure.fields)-1)
   {
-    reason= "Wrong number of columns";
+    reason= my_get_err_msg(ER_SEQUENCE_TABLE_HAS_WRONG_NUMBER_OF_COLUMNS);
     goto err;
   }
   if (lex->alter_info.key_list.elements > 0)
   {
-    reason= "Sequence tables cannot have any keys";
+    reason= my_get_err_msg(ER_SEQUENCE_TABLE_CANNOT_HAVE_ANY_KEYS);
     goto err;
   }
   if (lex->alter_info.check_constraint_list.elements > 0)
   {
-    reason= "Sequence tables cannot have any constraints";
+    reason= my_get_err_msg(ER_SEQUENCE_TABLE_CANNOT_HAVE_ANY_CONSTRAINTS);
     goto err;
   }
   if (lex->alter_info.flags & ALTER_ORDER)
   {
-    reason= "ORDER BY";
+    reason= my_get_err_msg(ER_SEQUENCE_TABLE_ORDER_BY);
     goto err;
   }
 

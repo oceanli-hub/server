@@ -642,58 +642,114 @@ next value for t1
 126
 select next value for t1;
 ERROR HY000: Sequence 'test.t1' has run out
+alter sequence t1 cycle;
+Warnings:
+Note	1292	Truncated incorrect INTEGER value: 'MAXVALUE'
+select next value for t1;
+next value for t1
+1
 create or replace sequence t1 as tinyint unsigned start with 254;
 select next value for t1;
 next value for t1
 254
 select next value for t1;
 ERROR HY000: Sequence 'test.t1' has run out
+alter sequence t1 cycle;
+Warnings:
+Note	1292	Truncated incorrect INTEGER value: 'MAXVALUE'
+select next value for t1;
+next value for t1
+1
 create or replace sequence t1 as smallint start with 32766;
 select next value for t1;
 next value for t1
 32766
 select next value for t1;
 ERROR HY000: Sequence 'test.t1' has run out
+alter sequence t1 cycle;
+Warnings:
+Note	1292	Truncated incorrect INTEGER value: 'MAXVALUE'
+select next value for t1;
+next value for t1
+1
 create or replace sequence t1 as smallint unsigned start with 65534;
 select next value for t1;
 next value for t1
 65534
 select next value for t1;
 ERROR HY000: Sequence 'test.t1' has run out
+alter sequence t1 cycle;
+Warnings:
+Note	1292	Truncated incorrect INTEGER value: 'MAXVALUE'
+select next value for t1;
+next value for t1
+1
 create or replace sequence t1 as mediumint start with 8388606;
 select next value for t1;
 next value for t1
 8388606
 select next value for t1;
 ERROR HY000: Sequence 'test.t1' has run out
+alter sequence t1 cycle;
+Warnings:
+Note	1292	Truncated incorrect INTEGER value: 'MAXVALUE'
+select next value for t1;
+next value for t1
+1
 create or replace sequence t1 as mediumint unsigned start with 16777214;
 select next value for t1;
 next value for t1
 16777214
 select next value for t1;
 ERROR HY000: Sequence 'test.t1' has run out
+alter sequence t1 cycle;
+Warnings:
+Note	1292	Truncated incorrect INTEGER value: 'MAXVALUE'
+select next value for t1;
+next value for t1
+1
 create or replace sequence t1 as int start with 2147483646;
 select next value for t1;
 next value for t1
 2147483646
 select next value for t1;
 ERROR HY000: Sequence 'test.t1' has run out
+alter sequence t1 cycle;
+Warnings:
+Note	1292	Truncated incorrect INTEGER value: 'MAXVALUE'
+select next value for t1;
+next value for t1
+1
 create or replace sequence t1 as int unsigned start with 4294967294;
 select next value for t1;
 next value for t1
 4294967294
 select next value for t1;
 ERROR HY000: Sequence 'test.t1' has run out
+alter sequence t1 cycle;
+Warnings:
+Note	1292	Truncated incorrect INTEGER value: 'MAXVALUE'
+select next value for t1;
+next value for t1
+1
 create or replace sequence t1 as bigint start with 9223372036854775806;
 select next value for t1;
 next value for t1
 9223372036854775806
 select next value for t1;
 ERROR HY000: Sequence 'test.t1' has run out
+alter sequence t1 cycle;
+select next value for t1;
+next value for t1
+1
 create or replace sequence t1 as bigint unsigned start with 18446744073709551614;
 select next value for t1;
 next value for t1
 -2
+select next value for t1;
+ERROR HY000: Sequence 'test.t1' has run out
+alter sequence t1 cycle;
+ERROR HY000: Sequence 'test.t1' has out of range value for options
 select next value for t1;
 ERROR HY000: Sequence 'test.t1' has run out
 drop sequence t1;
