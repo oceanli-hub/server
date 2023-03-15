@@ -43,30 +43,33 @@
 
 Sequence_row_definition sequence_structure(const Type_handler* handler)
 {
-  // We don't really care about src because it is unused in max_display_length_for_field().
+  /*
+    We don't really care about src because it is unused in
+    max_display_length_for_field().
+  */
   const Conv_source src(handler, 0, system_charset_info);
   const uint32 len= handler->max_display_length_for_field(src) + 1;
   const LEX_CSTRING empty= {STRING_WITH_LEN("")};
   const uint flag_unsigned= handler->is_unsigned() ? UNSIGNED_FLAG : 0;
-#define FL (NOT_NULL_FLAG | NO_DEFAULT_VALUE_FLAG)
-#define FLV (NOT_NULL_FLAG | NO_DEFAULT_VALUE_FLAG | flag_unsigned)
-  return {{{"next_not_cached_value", len, handler, empty, FLV},
-           {"minimum_value", len, handler, empty, FLV},
-           {"maximum_value", len, handler, empty, FLV},
+#define FNND (NOT_NULL_FLAG | NO_DEFAULT_VALUE_FLAG)
+#define FNNDFU (NOT_NULL_FLAG | NO_DEFAULT_VALUE_FLAG | flag_unsigned)
+  return {{{"next_not_cached_value", len, handler, empty, FNNDFU},
+           {"minimum_value", len, handler, empty, FNNDFU},
+           {"maximum_value", len, handler, empty, FNNDFU},
            {"start_value", len, handler,
             {STRING_WITH_LEN("start value when sequences is created or value "
-                             "if RESTART is used")}, FLV},
+                             "if RESTART is used")}, FNNDFU},
            {"increment", 21, &type_handler_slonglong,
-            {STRING_WITH_LEN("increment value")}, FL},
+            {STRING_WITH_LEN("increment value")}, FNND},
            {"cache_size", 21, &type_handler_ulonglong, empty,
-            FL | UNSIGNED_FLAG},
+            FNND | UNSIGNED_FLAG},
            {"cycle_option", 1, &type_handler_utiny,
-            {STRING_WITH_LEN("0 if no cycles are allowed, 1 if the sequence "                             "should begin a new cycle when maximum_value is "                             "passed")}, FL | UNSIGNED_FLAG},
+            {STRING_WITH_LEN("0 if no cycles are allowed, 1 if the sequence "                             "should begin a new cycle when maximum_value is "                             "passed")}, FNND | UNSIGNED_FLAG},
            {"cycle_count", 21, &type_handler_slonglong,
-            {STRING_WITH_LEN("How many cycles have been done")}, FL},
+            {STRING_WITH_LEN("How many cycles have been done")}, FNND},
            {NULL, 0, &type_handler_slonglong, {STRING_WITH_LEN("")}, 0}}};
-#undef FLV
-#undef FL
+#undef FNNDFU
+#undef FNND
 }
 
 bool sequence_definition::is_allowed_value_type(enum_field_types type)
@@ -92,8 +95,10 @@ Type_handler const *sequence_definition::value_type_handler()
 
 longlong sequence_definition::value_type_max()
 {
-  // value_type != MYSQL_TYPE_LONGLONG to avoid undefined behaviour
-  // https://stackoverflow.com/questions/9429156/by-left-shifting-can-a-number-be-set-to-zero
+  /*
+    Use value_type != MYSQL_TYPE_LONGLONG to avoid undefined behaviour
+    https://stackoverflow.com/questions/9429156/by-left-shifting-can-a-number-be-set-to-zero
+  */
   return is_unsigned && value_type != MYSQL_TYPE_LONGLONG ?
     ~(~0ULL << 8 * value_type_handler()->calc_pack_length(0)) :
     ~value_type_min();
@@ -105,9 +110,14 @@ longlong sequence_definition::value_type_min() {
 }
 
 /*
-  Truncate `original` to `result`.
+  Truncate a Longlong_hybrid.
+  
   If `original` is greater than value_type_max(), truncate down to value_type_max()
   If `original` is less than value_type_min(), truncate up to value_type_min()
+
+  @param in  original   The value to truncate
+
+  @return               The truncated value.
 */
 longlong sequence_definition::truncate_value(const Longlong_hybrid& original)
 {
@@ -123,15 +133,15 @@ longlong sequence_definition::truncate_value(const Longlong_hybrid& original)
 
 /*
   Check whether sequence values are valid.
+  
   Sets default values for fields that are not used, according to Oracle spec.
 
-  RETURN VALUES
-     false      valid
-     true       invalid
+  @param in   thd                 The connection
+  @param in   set_reserved_until  Whether to set reserved_until to start
+  
+  @retval     false               valid
+              true                invalid
 */
-
-// from_parser: whether to check foo_from_parser or foo, where foo in
-// {min_value, max_value, ...}
 bool sequence_definition::check_and_adjust(THD *thd, bool set_reserved_until)
 {
   longlong max_increment;
@@ -183,12 +193,14 @@ bool sequence_definition::check_and_adjust(THD *thd, bool set_reserved_until)
     /* Use min_value or max_value for start depending on real_increment */
     start= real_increment < 0 ? max_value : min_value;
   } else
-    // If the supplied start value is out of range for the value type,
-    // instead of immediately reporting error, we truncate it to
-    // value_type_min or value_type_max depending on which side it is
-    // one. Whenever such truncation happens, the condition that
-    // max_value >= start >= min_value will be violated, and the error
-    // will be reported then.
+    /*
+      If the supplied start value is out of range for the value type,
+      instead of immediately reporting error, we truncate it to
+      value_type_min or value_type_max depending on which side it is
+      one. Whenever such truncation happens, the condition that
+      max_value >= start >= min_value will be violated, and the error
+      will be reported then.
+    */
     start= truncate_value(start_from_parser);
 
   if (set_reserved_until)
@@ -201,7 +213,7 @@ bool sequence_definition::check_and_adjust(THD *thd, bool set_reserved_until)
                   llabs(real_increment) :
                   MAX_AUTO_INCREMENT_VALUE);
 
-  // Common case for error, signed or unsigned.
+  /* Common case for error, signed or unsigned. */
   if (!is_allowed_value_type(value_type) || cache < 0)
     DBUG_RETURN(TRUE);
   
@@ -353,7 +365,8 @@ err:
     true        Failure (out of memory)
 */
 
-bool sequence_definition::prepare_sequence_fields(List<Create_field> *fields, bool alter)
+bool sequence_definition::prepare_sequence_fields(List<Create_field> *fields,
+                                                  bool alter)
 {
   DBUG_ENTER("prepare_sequence_fields");
   const Sequence_row_definition row_def= sequence_structure(value_type_handler());
@@ -1032,10 +1045,8 @@ bool Sql_cmd_alter_sequence::execute(THD *thd)
 
   if (new_seq->used_fields & seq_field_used_as)
   {
-    // This shouldn't happen as it should have been prevented during
-    // parsing.
-    if (new_seq->used_fields - seq_field_used_as)
-      DBUG_RETURN(TRUE);
+    /* This should have been prevented during parsing. */
+    DBUG_ASSERT(!(new_seq->used_fields - seq_field_used_as));
 
     first_table->lock_type= TL_READ_NO_INSERT;
     first_table->mdl_request.set_type(MDL_SHARED_NO_WRITE);
@@ -1114,9 +1125,11 @@ bool Sql_cmd_alter_sequence::execute(THD *thd)
   {
     if (!(new_seq->used_fields & seq_field_used_restart_value))
       new_seq->restart_from_parser=      new_seq->start_from_parser;
-    // Similar to start, we just need to truncate reserved_until and
-    // the errors will be reported in check_and_adjust if truncation
-    // happens on the wrong end.
+    /*
+      Similar to start, we just need to truncate reserved_until and
+      the errors will be reported in check_and_adjust if truncation
+      happens on the wrong end.
+    */
     new_seq->reserved_until= new_seq->truncate_value(new_seq->restart_from_parser);
   }
 

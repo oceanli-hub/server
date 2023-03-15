@@ -65,9 +65,11 @@ public:
     min_value_from_parser(1, false),
     max_value_from_parser(LONGLONG_MAX-1, false), start_from_parser(1, false),
     increment(1), cache(1000), round(0), restart_from_parser(0, false), cycle(0), used_fields(0),
-    // We use value type and is_unsigned instead of a handler because
-    // Type_handler is incomplete, which we cannot initialise here
-    // with &type_handler_slonglong.
+    /*
+      We use value type and is_unsigned instead of a handler because
+      Type_handler is incomplete, which we cannot initialise here with
+      &type_handler_slonglong.
+    */
     value_type(MYSQL_TYPE_LONGLONG), is_unsigned(false)
   {}
   longlong reserved_until;
@@ -80,7 +82,6 @@ public:
   longlong increment;
   longlong cache;
   ulonglong round;
-  // TODO: allow unsigned in restart
   longlong restart;              // alter sequence restart value
   Longlong_hybrid restart_from_parser;
   bool     cycle;

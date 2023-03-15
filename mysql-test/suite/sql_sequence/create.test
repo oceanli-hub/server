@@ -623,6 +623,21 @@ show create table t1;
 create or replace sequence t1 as bigint unsigned;
 show create sequence t1;
 show create table t1;
+create or replace sequence t1 increment -1 as tinyint;
+show create sequence t1;
+show create table t1;
+create or replace sequence t1 increment -1 as smallint;
+show create sequence t1;
+show create table t1;
+create or replace sequence t1 increment -1 as mediumint;
+show create sequence t1;
+show create table t1;
+create or replace sequence t1 increment -1 as int;
+show create sequence t1;
+show create table t1;
+create or replace sequence t1 increment -1 as bigint;
+show create sequence t1;
+show create table t1;
 #zerofill is not supported
 --error ER_BAD_OPTION_VALUE
 create or replace sequence t1 as tinyint zerofill;
@@ -698,9 +713,22 @@ create or replace sequence t1 start with 123456789012345678901 as tinyint unsign
 
 drop sequence t1;
 
-# information_schema.sequences
+--echo # -----
+--echo # information_schema.sequences
+--echo # -----
 create sequence s1 as tinyint unsigned increment by 23;
 create sequence s2 start with 42 minvalue -9223372036854775807;
 create sequence s3 as bigint unsigned start with 12345678901234567890 cycle;
+#test support of all types in information schema
+create sequence s4 as tinyint;
+create sequence s5 as smallint;
+create sequence s6 as mediumint;
+create sequence s7 as int;
+create sequence s8 as bigint;
+create sequence s9 as tinyint unsigned;
+create sequence s10 as smallint unsigned;
+create sequence s11 as mediumint unsigned;
+create sequence s12 as int unsigned;
+create sequence s13 as bigint unsigned;
 select * from information_schema.sequences;
-drop sequence s1, s2, s3;
+drop sequence s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13;

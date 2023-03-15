@@ -200,8 +200,10 @@ void _CONCAT_UNDERSCORED(turn_parser_debug_on,yyparse)()
   ulonglong ulonglong_number;
   longlong longlong_number;
   uint sp_instr_addr;
-  // Longlong_hybrid does not have a default constructor, hence the
-  // default value below.
+  /*
+    Longlong_hybrid does not have a default constructor, hence the
+    default value below.
+  */
   Longlong_hybrid longlong_hybrid_number= Longlong_hybrid(0, false);
 
   /* structs */
@@ -7141,8 +7143,13 @@ alter:
           {
             /* Create a generic ALTER SEQUENCE statment. */
             Lex->m_sql_cmd= new (thd->mem_root) Sql_cmd_alter_sequence($3);
-            if ((Lex->create_info.seq_create_info->used_fields & seq_field_used_as) && (Lex->create_info.seq_create_info->used_fields - seq_field_used_as))
-              my_yyabort_error((ER_NOT_SUPPORTED_YET, MYF(0), "ALTER SEQUENCE with both AS <type> and something else."));
+            if ((Lex->create_info.seq_create_info->used_fields &
+                 seq_field_used_as) &&
+                (Lex->create_info.seq_create_info->used_fields -
+                 seq_field_used_as))
+              my_yyabort_error((ER_NOT_SUPPORTED_YET, MYF(0),
+                                "ALTER SEQUENCE with both AS <type> and "
+                                "something else."));
             if (unlikely(Lex->m_sql_cmd == NULL))
               MYSQL_YYABORT;
           } stmt_end {}
@@ -12584,7 +12591,10 @@ real_ulong_num:
         | dec_num_error { MYSQL_YYABORT; }
         ;
 
-// For simple sequence metadata values that are signed and do not need truncation
+/*
+  For simple sequence metadata values that are signed and do not need
+  truncation
+*/
 sequence_value_num:
           opt_plus NUM           { int error; $$= (longlong) my_strtoll10($2.str, (char**) 0, &error); }
         | opt_plus LONG_NUM      { int error; $$= (longlong) my_strtoll10($2.str, (char**) 0, &error); }
@@ -12601,7 +12611,10 @@ sequence_value_num:
           }
         ;
 
-// For sequence metadata values that may be unsigned but do not need truncation (start, restart)
+/*
+  For sequence metadata values that may be unsigned but do not need
+  truncation (start, restart)
+*/
 sequence_value_hybrid_num:
           opt_plus NUM
             {
