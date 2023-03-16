@@ -796,7 +796,7 @@ public:
 class Item_func_json_schema_valid: public Item_bool_func
 {
   String tmp_js;
-  bool schema_validated;
+  bool schema_parsed;
   String tmp_val, *val;
   List<Json_schema_keyword> keyword_list;
   List<Json_schema_keyword> all_keywords;
@@ -806,7 +806,7 @@ public:
     Item_bool_func(thd, a, b)
     {
       val= NULL;
-      schema_validated= false;
+      schema_parsed= false;
     }
   LEX_CSTRING func_name_cstring() const override
   {

@@ -832,3 +832,19 @@ SET @schema_media_string= '{
   "contentMediaType": "text/html"
 }';
 SELECT JSON_SCHEMA_VALID(@schema_media_string, '"str1"');
+
+SET @schema_reference= '{"$ref": "http://example.com/custom-email-validator.json#"}';
+--error ER_JSON_SCHEMA_KEYWORD_UNSUPPORTED
+SELECT JSON_SCHEMA_VALID(@schema_reference, '{}');
+
+SET @schema_reference= '{"$id": "http://example.com/custom-email-validator.json#"}';
+--error ER_JSON_SCHEMA_KEYWORD_UNSUPPORTED
+SELECT JSON_SCHEMA_VALID(@schema_reference, '{}');
+
+SET @schema_reference= '{"$anchor": "http://example.com/custom-email-validator.json#"}';
+--error ER_JSON_SCHEMA_KEYWORD_UNSUPPORTED
+SELECT JSON_SCHEMA_VALID(@schema_reference, '{}');
+
+SET @schema_reference= '{"$defs": "http://example.com/custom-email-validator.json#"}';
+--error ER_JSON_SCHEMA_KEYWORD_UNSUPPORTED
+SELECT JSON_SCHEMA_VALID(@schema_reference, '{}');

@@ -4728,7 +4728,7 @@ longlong Item_func_json_schema_valid::val_int()
   json_engine_t ve;
   int is_valid= 1;
 
-  if (!schema_validated)
+  if (!schema_parsed)
     return 0;
 
   val= args[1]->val_json(&tmp_val);
@@ -4796,7 +4796,7 @@ bool Item_func_json_schema_valid::fix_length_and_dec(THD *thd)
                   (const uchar *) js->ptr() + js->length());
   if (!create_object_and_handle_keyword(thd, &je, &keyword_list,
                                           &all_keywords))
-    schema_validated= true;
+    schema_parsed= true;
   else
     res= true;
 

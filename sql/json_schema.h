@@ -23,21 +23,20 @@
 #include "sql_type_json.h"
 #include "json_schema_helper.h"
 
+struct st_json_schema_keyword_map;
+
 class Json_schema_keyword : public Sql_alloc
 {
   public:
     Json_schema_keyword *alternate_schema;
-    char keyword_name[64];
+    st_json_schema_keyword_map *keyword_map;
     double value;
     uint priority;
     bool allowed;
 
-    Json_schema_keyword()
+    Json_schema_keyword() : alternate_schema(NULL), keyword_map(NULL),
+                            value(0), priority(0), allowed(true)
     {
-      priority= 0;
-      alternate_schema= NULL;
-      value= 0;
-      allowed= true;
     }
     virtual ~Json_schema_keyword() = default;
 
@@ -120,12 +119,6 @@ class Json_schema_additional_and_unevaluated : public Json_schema_keyword
 class Json_schema_annotation : public Json_schema_keyword
 {
   public:
-    Json_schema_annotation()
-    {
-      size_t len= strlen("annotation");
-      strncpy(keyword_name, (const char*)"annotation", len);
-      keyword_name[len]='\0';
-    }
     bool handle_keyword(THD *thd, json_engine_t *je,
                         const char* key_start,
                         const char* key_end,
@@ -135,12 +128,6 @@ class Json_schema_annotation : public Json_schema_keyword
 class Json_schema_format : public Json_schema_keyword
 {
   public:
-    Json_schema_format()
-    {
-      size_t len= strlen("format");
-      strncpy(keyword_name, (const char*)"format", len);
-      keyword_name[len]='\0';
-    }
     bool handle_keyword(THD *thd, json_engine_t *je,
                         const char* key_start,
                         const char* key_end,
@@ -165,9 +152,6 @@ class Json_schema_type : public Json_schema_keyword
                         List<Json_schema_keyword> *all_keywords) override;
     Json_schema_type()
     {
-      size_t len= strlen("type");
-      strncpy(keyword_name, (const char*)"type", len);
-      keyword_name[len]='\0';
       type= 0;
     }
 };
@@ -188,9 +172,6 @@ class Json_schema_const : public Json_schema_keyword
                         List<Json_schema_keyword> *all_keywords) override;
     Json_schema_const()
     {
-      size_t len= strlen("const");
-      strncpy(keyword_name, (const char*)"const", len);
-      keyword_name[len]='\0';
       const_json_value= NULL;
     }
 };
@@ -215,9 +196,6 @@ class Json_schema_enum : public  Json_schema_keyword
                         List<Json_schema_keyword> *all_keywords) override;
     Json_schema_enum()
     {
-      size_t len= strlen("enum");
-      strncpy(keyword_name, (const char*)"enum", len);
-      keyword_name[len]='\0';
       enum_scalar= HAS_NO_VAL;
     }
     ~Json_schema_enum()
@@ -236,12 +214,6 @@ class Json_schema_maximum : public Json_schema_keyword
                         const char* key_start,
                         const char* key_end,
                         List<Json_schema_keyword> *all_keywords) override;
-    Json_schema_maximum()
-    {
-      size_t len= strlen("maximum");
-      strncpy(keyword_name, (const char*)"maximum", len);
-      keyword_name[len]='\0';
-    }
 };
 
 class Json_schema_minimum : public Json_schema_keyword
@@ -254,12 +226,6 @@ class Json_schema_minimum : public Json_schema_keyword
                         const char* key_start,
                         const char* key_end,
                         List<Json_schema_keyword> *all_keywords) override;
-    Json_schema_minimum()
-    {
-      size_t len= strlen("minimum");
-      strncpy(keyword_name, (const char*)"minimum", len);
-      keyword_name[len]='\0';
-    }
 };
 
 class Json_schema_multiple_of : public Json_schema_keyword
@@ -271,12 +237,6 @@ class Json_schema_multiple_of : public Json_schema_keyword
                         const char* key_start,
                         const char* key_end,
                         List<Json_schema_keyword> *all_keywords) override;
-    Json_schema_multiple_of()
-    {
-      size_t len= strlen("multipleOf");
-      strncpy(keyword_name, (const char*)"multipleOf", len);
-      keyword_name[len]='\0';
-    }
 };
 
 class Json_schema_ex_maximum : public Json_schema_keyword
@@ -288,12 +248,6 @@ class Json_schema_ex_maximum : public Json_schema_keyword
                         const char* key_start,
                         const char* key_end,
                         List<Json_schema_keyword> *all_keywords) override;
-    Json_schema_ex_maximum()
-    {
-      size_t len= strlen("exclusiveMaximum");
-      strncpy(keyword_name, (const char*)"exclusiveMaximum", len);
-      keyword_name[len]='\0';
-    }
 };
 
 class Json_schema_ex_minimum : public Json_schema_keyword
@@ -305,12 +259,6 @@ class Json_schema_ex_minimum : public Json_schema_keyword
                         const char* key_start,
                         const char* key_end,
                         List<Json_schema_keyword> *all_keywords) override;
-    Json_schema_ex_minimum()
-    {
-      size_t len= strlen("exclusiveMinimum");
-      strncpy(keyword_name, (const char*)"exclusiveMinimum", len);
-      keyword_name[len]='\0';
-    }
 };
 
 class Json_schema_max_len : public Json_schema_keyword
@@ -322,12 +270,6 @@ class Json_schema_max_len : public Json_schema_keyword
                         const char* key_start,
                         const char* key_end,
                         List<Json_schema_keyword> *all_keywords) override;
-    Json_schema_max_len()
-    {
-      size_t len= strlen("maxLength");
-      strncpy(keyword_name, (const char*)"maxLength", len);
-      keyword_name[len]='\0';
-    }
 };
 
 class Json_schema_min_len : public Json_schema_keyword
@@ -339,12 +281,6 @@ class Json_schema_min_len : public Json_schema_keyword
                         const char* key_start,
                         const char* key_end,
                         List<Json_schema_keyword> *all_keywords) override;
-    Json_schema_min_len()
-    {
-      size_t len= strlen("minLength");
-      strncpy(keyword_name, (const char*)"minLength", len);
-      keyword_name[len]='\0';
-    }
 };
 
 class Json_schema_pattern : public Json_schema_keyword
@@ -365,9 +301,6 @@ class Json_schema_pattern : public Json_schema_keyword
     {
       str= NULL;
       pattern= NULL;
-      size_t len= strlen("pattern");
-      strncpy(keyword_name, (const char*)"pattern", len);
-      keyword_name[len]='\0';
     }
     ~Json_schema_pattern() { re.cleanup(); }
 };
@@ -381,12 +314,6 @@ class Json_schema_max_items : public Json_schema_keyword
                         const char* key_start,
                         const char* key_end,
                         List<Json_schema_keyword> *all_keywords) override;
-    Json_schema_max_items()
-    {
-      size_t len= strlen("maxItems");
-      strncpy(keyword_name, (const char*)"maxItems", len);
-      keyword_name[len]='\0';
-    }
 };
 
 class Json_schema_min_items : public Json_schema_keyword
@@ -398,12 +325,6 @@ class Json_schema_min_items : public Json_schema_keyword
                         const char* key_start,
                         const char* key_end,
                         List<Json_schema_keyword> *all_keywords) override;
-    Json_schema_min_items()
-    {
-      size_t len= strlen("minItems");
-      strncpy(keyword_name, (const char*)"minItems", len);
-      keyword_name[len]='\0';
-    }
 };
 
 class Json_schema_max_contains : public Json_schema_keyword
@@ -413,12 +334,6 @@ class Json_schema_max_contains : public Json_schema_keyword
                         const char* key_start,
                         const char* key_end,
                         List<Json_schema_keyword> *all_keywords) override;
-    Json_schema_max_contains()
-    {
-      size_t len= strlen("maxContains");
-      strncpy(keyword_name, (const char*)"maxContains", len);
-      keyword_name[len]='\0';
-    }
 };
 
 class Json_schema_min_contains : public Json_schema_keyword
@@ -428,12 +343,6 @@ class Json_schema_min_contains : public Json_schema_keyword
                         const char* key_start,
                         const char* key_end,
                         List<Json_schema_keyword> *all_keywords) override;
-    Json_schema_min_contains()
-    {
-      size_t len= strlen("minContains");
-      strncpy(keyword_name, (const char*)"minContains", len);
-      keyword_name[len]='\0';
-    }
 };
 /*
   The value of max_contains and min_contains is only
@@ -453,12 +362,6 @@ class Json_schema_contains : public Json_schema_keyword
                         const char* key_start,
                         const char* key_end,
                         List<Json_schema_keyword> *all_keywords) override;
-    Json_schema_contains()
-    {
-      size_t len= strlen("contains");
-      strncpy(keyword_name, (const char*)"contains", len);
-      keyword_name[len]='\0';
-    }
     void set_dependents(Json_schema_keyword *min, Json_schema_keyword *max)
     {
       min_contains= min;
@@ -478,12 +381,6 @@ class Json_schema_unique_items : public Json_schema_keyword
                         const char* key_start,
                         const char* key_end,
                         List<Json_schema_keyword> *all_keywords) override;
-    Json_schema_unique_items()
-    {
-      size_t len= strlen("uniqueItems");
-      strncpy(keyword_name, (const char*)"uniqueItems", len);
-      keyword_name[len]='\0';
-    }
 };
 
 
@@ -499,9 +396,6 @@ class Json_schema_prefix_items : public Json_schema_keyword
                         List<Json_schema_keyword> *all_keywords) override;
     Json_schema_prefix_items()
     {
-      size_t len= strlen("prefixItems");
-      strncpy(keyword_name, (const char*)"prefixItems", len);
-      keyword_name[len]='\0';
       priority= 1;
     }
 };
@@ -513,9 +407,6 @@ class Json_schema_unevaluated_items :
     Json_schema_unevaluated_items()
     {
       priority= 4;
-      size_t len= strlen("unevaluatedItems");
-      strncpy(keyword_name, (const char*)"unevaluatedItems", len);
-      keyword_name[len]='\0';
     }
     bool validate(const json_engine_t *je, const uchar *k_start= NULL,
                   const uchar *k_end= NULL) override;
@@ -528,9 +419,6 @@ class Json_schema_additional_items :
     Json_schema_additional_items()
     {
       priority= 3;
-      size_t len= strlen("additionalItems");
-      strncpy(keyword_name, (const char*)"additionalItems", len);
-      keyword_name[len]='\0';
     }
     bool validate(const json_engine_t *je, const uchar *k_start= NULL,
                   const uchar *k_end= NULL) override;
@@ -543,9 +431,6 @@ class Json_schema_items : public Json_schema_keyword
   public:
     Json_schema_items()
     {
-      size_t len= strlen("items");
-      strncpy(keyword_name, (const char*)"items", len);
-      keyword_name[len]='\0';
       priority= 2;
     }
     void set_allowed(bool allowed_val) { allowed= allowed_val; }
@@ -572,12 +457,6 @@ class Json_schema_property_names : public Json_schema_keyword
                         const char* key_start,
                         const char* key_end,
                         List<Json_schema_keyword> *all_keywords) override;
-    Json_schema_property_names()
-    {
-      size_t len= strlen("propertyNames");
-      strncpy(keyword_name, (const char*)"propertyNames", len);
-      keyword_name[len]='\0';
-    }
 };
 
 typedef struct property
@@ -595,9 +474,6 @@ class Json_schema_properties : public Json_schema_keyword
   public:
     Json_schema_properties()
     {
-      size_t len= strlen("properties");
-      strncpy(keyword_name, (const char*)"properties", len);
-      keyword_name[len]='\0';
       priority= 1;
     }
     bool validate(const json_engine_t *je, const uchar *k_start= NULL,
@@ -622,12 +498,6 @@ class Json_schema_dependent_schemas : public Json_schema_keyword
     bool is_hash_inited;
 
   public:
-    Json_schema_dependent_schemas()
-    {
-      size_t len= strlen("dependentSchemas");
-      strncpy(keyword_name, (const char*)"dependentSchemas", len);
-      keyword_name[len]='\0';
-    }
     ~Json_schema_dependent_schemas()
     {
       if (is_hash_inited)
@@ -649,9 +519,6 @@ class Json_schema_additional_properties :
     Json_schema_additional_properties()
     {
       priority= 3;
-      size_t len= strlen("additionalProperties");
-      strncpy(keyword_name, (const char*)"additionalProperties", len);
-      keyword_name[len]='\0';
     }
     bool validate(const json_engine_t *je, const uchar *k_start= NULL,
                   const uchar *k_end= NULL) override;
@@ -664,9 +531,6 @@ class Json_schema_unevaluated_properties :
     Json_schema_unevaluated_properties()
     {
       priority= 4;
-      size_t len= strlen("unevaluatedProperties");
-      strncpy(keyword_name, (const char*)"unevaluatedProperties", len);
-      keyword_name[len]='\0';
     }
     bool validate(const json_engine_t *je, const uchar *k_start= NULL,
                   const uchar *k_end= NULL) override;
@@ -694,9 +558,6 @@ class Json_schema_pattern_properties : public Json_schema_keyword
                         List<Json_schema_keyword> *all_keywords) override;
     Json_schema_pattern_properties()
     {
-      size_t len= strlen("patternProperties");
-      strncpy(keyword_name, (const char*)"patternProperties", len);
-      keyword_name[len]='\0';
       priority= 2;
     }
     ~Json_schema_pattern_properties()
@@ -729,12 +590,6 @@ class Json_schema_max_prop : public Json_schema_keyword
                         const char* key_start,
                         const char* key_end,
                         List<Json_schema_keyword> *all_keywords) override;
-    Json_schema_max_prop()
-    {
-      size_t len= strlen("maxProperties");
-      strncpy(keyword_name, (const char*)"maxProperties", len);
-      keyword_name[len]='\0';
-    }
 };
 
 class Json_schema_min_prop : public Json_schema_keyword
@@ -746,12 +601,6 @@ class Json_schema_min_prop : public Json_schema_keyword
                         const char* key_start,
                         const char* key_end,
                         List<Json_schema_keyword> *all_keywords) override;
-    Json_schema_min_prop()
-    {
-      size_t len= strlen("minProperties");
-      strncpy(keyword_name, (const char*)"minProperties", len);
-      keyword_name[len]='\0';
-    }
 };
 
 class Json_schema_required : public Json_schema_keyword
@@ -766,12 +615,6 @@ class Json_schema_required : public Json_schema_keyword
                         const char* key_start,
                         const char* key_end,
                         List<Json_schema_keyword> *all_keywords) override;
-    Json_schema_required()
-    {
-      size_t len= strlen("required");
-      strncpy(keyword_name, (const char*)"required", len);
-      keyword_name[len]='\0';
-    }
 };
 
 typedef struct dependent_keyowrds
@@ -792,12 +635,6 @@ class Json_schema_dependent_required : public Json_schema_keyword
                         const char* key_start,
                         const char* key_end,
                         List<Json_schema_keyword> *all_keywords) override;
-    Json_schema_dependent_required()
-    {
-      size_t len= strlen("dependentRequired");
-      strncpy(keyword_name, (const char*)"dependentRequired", len);
-      keyword_name[len]='\0';
-    }
 };
 
 enum logic_enum { HAS_ALL_OF= 2, HAS_ANY_OF= 4, HAS_ONE_OF= 8, HAS_NOT= 16};
@@ -816,9 +653,6 @@ class Json_schema_logic : public Json_schema_keyword
                         List<Json_schema_keyword> *all_keywords) override;
     Json_schema_logic()
     {
-      size_t len= strlen("logic");
-      strncpy(keyword_name, (const char*)"logic", len);
-      keyword_name[len]='\0';
       logic_flag= 0;
       alternate_choice1= alternate_choice2= NULL;
       priority= 1;
@@ -841,9 +675,6 @@ class Json_schema_not : public Json_schema_logic
   public:
     Json_schema_not()
     {
-      size_t len= strlen("not");
-      strncpy(keyword_name, (const char*)"not", len);
-      keyword_name[len]='\0';
       logic_flag= HAS_NOT;
     }
     bool handle_keyword(THD *thd, json_engine_t *je,
@@ -861,9 +692,6 @@ class Json_schema_one_of : public Json_schema_logic
   public:
     Json_schema_one_of()
     {
-      size_t len= strlen("oneOf");
-      strncpy(keyword_name, (const char*)"oneOf", len);
-      keyword_name[len]='\0';
       logic_flag= HAS_ONE_OF;
     }
     bool validate_count(uint *count, uint *total) override
@@ -877,9 +705,6 @@ class Json_schema_any_of : public Json_schema_logic
   public:
     Json_schema_any_of()
     {
-      size_t len= strlen("anyOf");
-      strncpy(keyword_name, (const char*)"anyOf", len);
-      keyword_name[len]='\0';
       logic_flag= HAS_ANY_OF;
     }
     bool validate_count(uint *count, uint *total) override
@@ -893,9 +718,6 @@ class Json_schema_all_of : public Json_schema_logic
   public:
     Json_schema_all_of()
     {
-      size_t len= strlen("allOf");
-      strncpy(keyword_name, (const char*)"allOf", len);
-      keyword_name[len]='\0';
       logic_flag= HAS_ALL_OF;
     }
     bool validate_count(uint *count, uint *total) override
@@ -940,47 +762,19 @@ class Json_schema_conditional : public Json_schema_keyword
 
 class Json_schema_if : public Json_schema_conditional
 {
-  public:
-    Json_schema_if()
-    {
-      size_t len= strlen("if");
-      strncpy(keyword_name, (const char*)"if", len);
-      keyword_name[len]='\0';
-    }
 };
 
 class Json_schema_else : public Json_schema_conditional
 {
-
-  public:
-    Json_schema_else()
-    {
-      size_t len= strlen("else");
-      strncpy(keyword_name, (const char*)"else", len);
-      keyword_name[len]='\0';
-    }
 };
 
 class Json_schema_then : public Json_schema_conditional
 {
-  public:
-    Json_schema_then()
-    {
-      size_t len= strlen("then");
-      strncpy(keyword_name, (const char*)"then", len);
-      keyword_name[len]='\0';
-    }
 };
 
 class Json_schema_media_string : public Json_schema_keyword
 {
   public:
-    Json_schema_media_string()
-    {
-      size_t len= strlen("media_string");
-      strncpy(keyword_name, (const char*)"media_string", len);
-      keyword_name[len]='\0';
-    }
     bool handle_keyword(THD *thd, json_engine_t *je,
                         const char* key_start,
                         const char* key_end,
@@ -990,12 +784,6 @@ class Json_schema_media_string : public Json_schema_keyword
 class Json_schema_reference : public Json_schema_keyword
 {
   public:
-    Json_schema_reference()
-    {
-      size_t len= strlen("reference");
-      strncpy(keyword_name, (const char*)"reference", len);
-      keyword_name[len]='\0';
-    }
     bool handle_keyword(THD *thd, json_engine_t *je,
                         const char* key_start,
                         const char* key_end,

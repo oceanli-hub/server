@@ -961,3 +961,15 @@ SET @schema_media_string= '{
 SELECT JSON_SCHEMA_VALID(@schema_media_string, '"str1"');
 JSON_SCHEMA_VALID(@schema_media_string, '"str1"')
 1
+SET @schema_reference= '{"$ref": "http://example.com/custom-email-validator.json#"}';
+SELECT JSON_SCHEMA_VALID(@schema_reference, '{}');
+ERROR HY000: $ref keyword is not supported
+SET @schema_reference= '{"$id": "http://example.com/custom-email-validator.json#"}';
+SELECT JSON_SCHEMA_VALID(@schema_reference, '{}');
+ERROR HY000: $id keyword is not supported
+SET @schema_reference= '{"$anchor": "http://example.com/custom-email-validator.json#"}';
+SELECT JSON_SCHEMA_VALID(@schema_reference, '{}');
+ERROR HY000: $anchor keyword is not supported
+SET @schema_reference= '{"$defs": "http://example.com/custom-email-validator.json#"}';
+SELECT JSON_SCHEMA_VALID(@schema_reference, '{}');
+ERROR HY000: $defs keyword is not supported

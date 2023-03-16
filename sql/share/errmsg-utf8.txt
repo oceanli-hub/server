@@ -10078,3 +10078,5 @@ ER_SLAVE_STATEMENT_TIMEOUT 70100
         eng "Slave log event execution was interrupted (slave_max_statement_time exceeded)"
 ER_JSON_INVALID_VALUE_FOR_KEYWORD
         eng "Invalid value for keyword %s"
+ER_JSON_SCHEMA_KEYWORD_UNSUPPORTED
+        eng "%s keyword is not supported"

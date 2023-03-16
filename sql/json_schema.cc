@@ -197,7 +197,7 @@ static Json_schema_keyword *create_json_schema_reference(THD *thd)
 
  static st_json_schema_keyword_map json_schema_func_array[]=
 {
-  { { STRING_WITH_LEN("type") },  create_json_schema_type, JSON_SCHEMA_COMMON_KEYWORD},
+  {{ STRING_WITH_LEN("type") },  create_json_schema_type, JSON_SCHEMA_COMMON_KEYWORD},
   {{ STRING_WITH_LEN("const") },  create_json_schema_const, JSON_SCHEMA_COMMON_KEYWORD},
   {{ STRING_WITH_LEN("enum") },  create_json_schema_enum, JSON_SCHEMA_COMMON_KEYWORD},
 
@@ -317,39 +317,31 @@ bool Json_schema_annotation::handle_keyword(THD *thd, json_engine_t *je,
                                                  *all_keywords)
 {
   bool is_invalid_value_type= false, res= false;
-  int key_len= (int)(key_end-key_start);
 
-  if (json_key_equals(key_start, { STRING_WITH_LEN("title") },
-                      key_len) ||
-      json_key_equals(key_start, { STRING_WITH_LEN("description") },
-                      key_len) ||
-      json_key_equals(key_start, { STRING_WITH_LEN("$comment") },
-                      key_len) ||
-      json_key_equals(key_start, { STRING_WITH_LEN("$schema") },
-                      key_len))
+  if (this->keyword_map == &(json_schema_func_array[38]) ||
+      this->keyword_map == &(json_schema_func_array[39]) ||
+      this->keyword_map == &(json_schema_func_array[40]) ||
+      this->keyword_map == &(json_schema_func_array[41]))
   {
     if (je->value_type != JSON_VALUE_STRING)
       is_invalid_value_type= true;
   }
-  else if (json_key_equals(key_start, { STRING_WITH_LEN("deprecated") },
-                           key_len) ||
-           json_key_equals(key_start, { STRING_WITH_LEN("readOnly") },
-                           key_len) ||
-           json_key_equals(key_start, { STRING_WITH_LEN("writeOnly") },
-                           key_len))
+  else if (this->keyword_map == &(json_schema_func_array[42]) ||
+           this->keyword_map == &(json_schema_func_array[43]) ||
+           this->keyword_map == &(json_schema_func_array[44]))
   {
     if (je->value_type != JSON_VALUE_TRUE &&
         je->value_type != JSON_VALUE_FALSE)
       is_invalid_value_type= true;
   }
-  else if (json_key_equals(key_start, { STRING_WITH_LEN("example") }, key_len))
+  else if (this->keyword_map == &(json_schema_func_array[45]))
   {
     if (je->value_type != JSON_VALUE_ARRAY)
       is_invalid_value_type= true;
     if (json_skip_level(je))
       return true;
   }
-  else if (json_key_equals(key_start, { STRING_WITH_LEN("default") }, key_len))
+  else if (this->keyword_map == &(json_schema_func_array[46]))
     return false;
 
   if (is_invalid_value_type)
@@ -1272,7 +1264,7 @@ bool Json_schema_prefix_items::handle_keyword(THD *thd, json_engine_t *je,
                                            all_keywords))
         return true;
 
-      prefix_items.push_back(keyword_list);
+      prefix_items.push_back(keyword_list, thd->mem_root);
   }
 
   return false;
@@ -1572,7 +1564,7 @@ bool Json_schema_required::handle_keyword(THD *thd, json_engine_t *je,
     {
       String *str= new (thd->mem_root)String((char*)je->value,
                                                     je->value_len, je->s.cs);
-      this->required_properties.push_back(str);
+      this->required_properties.push_back(str, thd->mem_root);
     }
   }
   return false;
@@ -1713,10 +1705,10 @@ bool Json_schema_dependent_required::handle_keyword(THD *thd, json_engine_t *je,
                   String *str=
                     new (thd->mem_root)String((char*)je->value,
                                                   je->value_len, je->s.cs);
-                  curr_dependent_keywords->dependents.push_back(str);
+                  curr_dependent_keywords->dependents.push_back(str, thd->mem_root);
                 }
               }
-              dependent_required.push_back(curr_dependent_keywords);
+              dependent_required.push_back(curr_dependent_keywords, thd->mem_root);
             }
             else
             {
@@ -1830,7 +1822,7 @@ Json_schema_additional_and_unevaluated::handle_keyword(THD *thd,
   }
   if (je->value_type != JSON_VALUE_TRUE)
   {
-    my_error(ER_JSON_INVALID_VALUE_FOR_KEYWORD, MYF(0), this->keyword_name);
+    my_error(ER_JSON_INVALID_VALUE_FOR_KEYWORD, MYF(0), this->keyword_map ? this->keyword_map->func_name.str : "");
     return true;
   }
   return false;
@@ -2011,24 +2003,16 @@ bool Json_schema_properties::validate(const json_engine_t *je,
         {
           if (validate_schema_items(&curr_je, curr_property->curr_schema))
             return true;
-          if (!json_value_scalar(&curr_je))
-          {
-            if (json_skip_level(&curr_je))
-              return true;
-          }
         }
         else
         {
           if (fall_back_on_alternate_schema(&curr_je, k_start, k_end))
             return true;
-          else
-          {
-            if (!json_value_scalar(&curr_je))
-            {
-              if (json_skip_level(&curr_je))
-                return true;
-            }
-          }
+        }
+        if (!json_value_scalar(&curr_je))
+        {
+          if (json_skip_level(&curr_je))
+            return true;
         }
       }
     }
@@ -2250,7 +2234,7 @@ bool Json_schema_pattern_properties::handle_keyword(THD *thd,
               return true;
           }
 
-          pattern_properties.push_back(curr_pattern_to_property);
+          pattern_properties.push_back(curr_pattern_to_property, thd->mem_root);
         }
       }
     }
@@ -2266,7 +2250,7 @@ bool Json_schema_logic::handle_keyword(THD *thd, json_engine_t *je,
 {
   if (je->value_type != JSON_VALUE_ARRAY)
   {
-    my_error(ER_JSON_INVALID_VALUE_FOR_KEYWORD, MYF(0), keyword_name);
+    my_error(ER_JSON_INVALID_VALUE_FOR_KEYWORD, MYF(0), this->keyword_map ? this->keyword_map->func_name.str : "");
     return true;
   }
 
@@ -2298,7 +2282,7 @@ bool Json_schema_logic::handle_keyword(THD *thd, json_engine_t *je,
                                          all_keywords))
       return true;
 
-    schema_items.push_back(keyword_list);
+    schema_items.push_back(keyword_list, thd->mem_root);
   }
 
   return false;
@@ -2365,13 +2349,13 @@ bool Json_schema_not::handle_keyword(THD *thd, json_engine_t *je,
 
   if (je->value_type != JSON_VALUE_OBJECT)
   {
-    my_error(ER_JSON_INVALID_VALUE_FOR_KEYWORD, MYF(0), keyword_name);
+    my_error(ER_JSON_INVALID_VALUE_FOR_KEYWORD, MYF(0), this->keyword_map ? this->keyword_map->func_name.str : "");
     return true;
   }
 
   res= create_object_and_handle_keyword(thd, je, &schema_list, all_keywords);
 
-  schema_items.push_back(&schema_list);
+  schema_items.push_back(&schema_list, thd->mem_root);
 
   return res;
 }
@@ -2432,7 +2416,7 @@ bool Json_schema_conditional::handle_keyword(THD *thd, json_engine_t *je,
 {
   if (je->value_type != JSON_VALUE_OBJECT)
   {
-     my_error(ER_JSON_INVALID_VALUE_FOR_KEYWORD, MYF(0), this->keyword_name);
+     my_error(ER_JSON_INVALID_VALUE_FOR_KEYWORD, MYF(0), this->keyword_map ? this->keyword_map->func_name.str : "");
     return true;
   }
   return create_object_and_handle_keyword(thd, je, &conditions_schema,
@@ -2571,14 +2555,10 @@ bool Json_schema_reference::handle_keyword(THD *thd, json_engine_t *je,
                                            List<Json_schema_keyword>
                                                      *all_keywords)
 {
-  if (je->value_type != JSON_VALUE_STRING)
-  {
-    String curr_keyword((char*)key_start, key_end-key_start, je->s.cs);
-    my_error(ER_JSON_INVALID_VALUE_FOR_KEYWORD, MYF(0), curr_keyword.ptr());
-    return true;
-  }
-
-  return false;
+  String keyword(0);
+  keyword.append((const char*)key_start, (int)(key_end-key_start));
+  my_error(ER_JSON_SCHEMA_KEYWORD_UNSUPPORTED, MYF(0), keyword.ptr());
+  return true;
 }
 
 Json_schema_keyword* create_object(THD *thd,
@@ -2599,6 +2579,7 @@ Json_schema_keyword* create_object(THD *thd,
   {
     curr_keyword= new Json_schema_keyword();
   }
+  curr_keyword->keyword_map= curr_keyword_map;
   return curr_keyword;
 }
 
@@ -2637,7 +2618,7 @@ void fix_keyword_list(List <Json_schema_keyword> *keyword_list)
   and then add them to main schema list.
 */
 bool
-add_schema_interdependence(List<Json_schema_keyword> *temporary,
+add_schema_interdependence(THD *thd, List<Json_schema_keyword> *temporary,
                            List<Json_schema_keyword> *keyword_list)
 {
   List_iterator<Json_schema_keyword> temp_it(*temporary);
@@ -2648,10 +2629,10 @@ add_schema_interdependence(List<Json_schema_keyword> *temporary,
 
   while((temp_keyword= temp_it++))
   {
-    size_t len= strlen(temp_keyword->keyword_name);
+    size_t len= strlen(temp_keyword->keyword_map ? temp_keyword->keyword_map->func_name.str : "");
     st_json_schema_keyword_map *curr_element= NULL;
     if ((curr_element= (st_json_schema_keyword_map*) my_hash_search(&all_keywords_hash,
-                       (uchar*)(temp_keyword->keyword_name), len)))
+                       (uchar*)(temp_keyword->keyword_map ? temp_keyword->keyword_map->func_name.str : ""), len)))
     {
       if (temp_keyword->priority > 0)
       {
@@ -2662,26 +2643,20 @@ add_schema_interdependence(List<Json_schema_keyword> *temporary,
         else if (curr_element->flag == JSON_SCHEMA_LOGIC_KEYWORD)
           logic_prop.push_back(temp_keyword);
       }
-      else if (json_key_equals(temp_keyword->keyword_name,
-                          { STRING_WITH_LEN("if") }, (int)len))
+      else if (temp_keyword->keyword_map == &(json_schema_func_array[35]))
           if_cond= temp_keyword;
-      else if (json_key_equals(temp_keyword->keyword_name,
-                               { STRING_WITH_LEN("then") }, (int)len))
+      else if (temp_keyword->keyword_map == &(json_schema_func_array[36]))
           then_cond= temp_keyword;
-      else if (json_key_equals(temp_keyword->keyword_name,
-                               { STRING_WITH_LEN("else") }, (int)len))
+      else if (temp_keyword->keyword_map == &(json_schema_func_array[37]))
           else_cond= temp_keyword;
-      else if (json_key_equals(temp_keyword->keyword_name,
-                               { STRING_WITH_LEN("contains") }, (int)len))
+      else if (temp_keyword->keyword_map == &(json_schema_func_array[18]))
           contains= temp_keyword;
-      else if (json_key_equals(temp_keyword->keyword_name,
-                              { STRING_WITH_LEN("minContains") }, (int)len))
+      else if (temp_keyword->keyword_map == &(json_schema_func_array[20]))
           min_contains= temp_keyword;
-      else if (json_key_equals(temp_keyword->keyword_name,
-                               { STRING_WITH_LEN("maxContains") }, (int)len))
+      else if (temp_keyword->keyword_map == &(json_schema_func_array[19]))
           max_contains= temp_keyword;
       else
-          keyword_list->push_back(temp_keyword);
+          keyword_list->push_back(temp_keyword, thd->mem_root);
     }
   }
 
@@ -2691,12 +2666,12 @@ add_schema_interdependence(List<Json_schema_keyword> *temporary,
                  new (current_thd->mem_root) Json_schema_conditional();
     if (cond_schema)
       cond_schema->set_conditions(if_cond, then_cond, else_cond);
-    keyword_list->push_back(cond_schema);
+    keyword_list->push_back(cond_schema, thd->mem_root);
   }
   if (contains)
   {
     contains->set_dependents(min_contains, max_contains);
-    keyword_list->push_back(contains);
+    keyword_list->push_back(contains, thd->mem_root);
   }
 
   fix_keyword_list(&array_prop);
@@ -2718,7 +2693,7 @@ add_schema_interdependence(List<Json_schema_keyword> *temporary,
     {
       curr_schema->set_alternate_schema_choice(array_prop.elem(0),
                                                object_prop.elem(0));
-      keyword_list->push_back(curr_schema);
+      keyword_list->push_back(curr_schema, thd->mem_root);
     }
     array_prop.empty();
     object_prop.empty();
@@ -2726,9 +2701,9 @@ add_schema_interdependence(List<Json_schema_keyword> *temporary,
   else
   {
     if (array_prop.elem(0))
-      keyword_list->push_back(array_prop.elem(0));
+      keyword_list->push_back(array_prop.elem(0), thd->mem_root);
     if (object_prop.elem(0))
-      keyword_list->push_back(object_prop.elem(0));
+      keyword_list->push_back(object_prop.elem(0), thd->mem_root);
   }
   return false;
 }
@@ -2774,23 +2749,24 @@ bool create_object_and_handle_keyword(THD *thd, json_engine_t *je,
         if (json_read_value(je))
          return true;
 
-        Json_schema_keyword *curr_keyword= create_object(thd, curr_keyword,
+        Json_schema_keyword *curr_keyword= NULL;
+        curr_keyword= create_object(thd, curr_keyword,
                                                          key_start, key_end);
         if (all_keywords)
-            all_keywords->push_back(curr_keyword);
+            all_keywords->push_back(curr_keyword, thd->mem_root);
         if (curr_keyword->handle_keyword(thd, je,
                                      (const char*)key_start,
                                      (const char*)key_end, all_keywords))
         {
           return true;
         }
-        temporary_list.push_back(curr_keyword);
+        temporary_list.push_back(curr_keyword, thd->mem_root);
         break;
       }
     }
   }
 
-  if (add_schema_interdependence(&temporary_list, keyword_list))
+  if (add_schema_interdependence(thd, &temporary_list, keyword_list))
     return true;
 
   return false;
